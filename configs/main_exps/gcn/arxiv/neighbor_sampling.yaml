@@ -20,8 +20,9 @@
     LBMB_val: True
     mode: 'n_sampling'
     neighbor_sampling: 'batch_ppr'
-    batch_order.ordered: False
-    batch_order.sampled: False
+    batch_order:
+        ordered: False
+        sampled: False
     num_batches: [4, 2, 2]
     diffusion_param: 0.25
     part_topk: [1, 1]
