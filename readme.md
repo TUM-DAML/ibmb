@@ -36,3 +36,15 @@ pip install seml
 pip install parallel-sort==0.0.3  # please do not use new versions
 pip install python-tsp
 ```
+
+## Run our code
+
+### To replicate the results in Table 7 and curves in Figure 3, run with the yaml files under `configs/main_exps/`
+
+e.g.
+
+`python run_ogbn.py with configs/main_exps/gcn/arxiv/ppr_based.yaml`
+
+### To replicate the results of inference experiments in Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`
+
+See the paper appendix for more information about how we tune the hyperparameters, especially the baselines. 
