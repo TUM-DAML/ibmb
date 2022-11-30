@@ -1,0 +1,10 @@
+__pycache__
+.idea
+.ipynb_checkpoints
+logs
+logs100
+*.npy
+*.pt
+*.pkl
+*.xlsx
+runs

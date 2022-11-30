@@ -1,0 +1,133 @@
+seml:
+    # executable: /nfs/homedirs/qian/gr/run_100m.py
+    executable: /nfs/homedirs/qian/gr/run_100m_time.py
+    name: qcd_gr_exp
+    output_dir: /nfs/homedirs/qian/gr/logs100
+    project_root_dir: /nfs/homedirs/qian/gr
+
+slurm:
+    experiments_per_job: 1
+    sbatch_options:
+        gres: gpu:1       # num GPUs
+        mem: 256G          # memory
+        cpus-per-task: 4  # num cores
+        time: 1-00:00     # max time, D-HH:MM
+        exclude: gpu15,gpu16,gpu17,gpu18,gpu19,gpu08,gpu11
+
+grid:
+
+    dataset_name: 
+        type: choice
+        options:
+            - 'papers100M'
+        
+    inference:
+        type: choice
+        options: 
+            - True
+            # - False
+            
+    mode:
+        type: choice
+        options:
+#             - 'part'
+            - 'ppr'
+            # - 'n_sampling'
+            # - 'ladies'
+
+    neighbor_sampling:
+        type: choice
+        options:
+            - 'ppr'
+#             - 'pnorm'
+            # - 'batch_ppr'
+#             - 'batch_hk'
+#             - 'ladies'
+
+    ladies_params.sample_size:
+        type: choice
+        options:
+            - [433827, 867654, 867654]
+
+    n_sampling_params.n_nodes:
+        type: choice
+        options:
+            - [10, 10, 8]
+                    
+    n_sampling_params.num_batches:
+        type: choice
+        options:
+            - [256, 32, 48]
+            
+    ppr_params.neighbor_topk:
+        type: choice
+        options:
+            # - 32
+            # - 64
+            - 96
+            # - 128
+
+    ppr_params.merge_max_size:
+        type: choice
+        options:
+            - None
+
+    ppr_params.primes_per_batch:
+        type: choice
+        options:
+            # - 15000
+            # - 7500
+            - 5000
+            # - 3000
+            
+    ppr_params.pushflowthresh:
+        type: choice
+        options:
+            # - 1e-4
+            - 2e-5
+
+    batch_order.ordered:
+        type: choice
+        options:
+            - True
+            # - False
+            
+    batch_order.sampled:
+        type: choice
+        options:
+#             - True
+            - False
+
+
+    num_batches:
+        type: choice
+        options:
+            - [256, 32, 48]
+            
+    
+    diffusion_param:
+        type: choice
+        options:
+            - 0.05
+    
+    part_topk:
+        type: choice
+        options:
+            - [1, 1]
+    
+    micro_batch:
+        type: choice
+        options:
+            - 1
+    
+    batch_size:
+        type: choice
+        options:
+            - 1
+
+    small_trainingset:
+        type: choice
+        options:
+            - 1
+#             - 0.1
+

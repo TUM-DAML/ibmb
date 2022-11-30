@@ -1,0 +1,50 @@
+seml:
+    executable: /nfs/homedirs/qian/gr/infer_full.py
+    name: qcd_gr_exp
+    output_dir: /nfs/homedirs/qian/gr/logs
+    project_root_dir: /nfs/homedirs/qian/gr
+
+slurm:
+    experiments_per_job: 1
+    sbatch_options:
+        gres: gpu:1       # num GPUs
+        mem: 48G          # memory
+        cpus-per-task: 4  # num cores
+        time: 1-00:00     # max time, D-HH:MM
+        exclude: gpu15,gpu16,gpu17,gpu18,gpu19
+        #        qos: interactive
+
+grid:
+    
+    dataset_name: 
+        type: choice
+        options:
+            - 'products'
+            # - 'arxiv'
+            # - 'reddit'
+
+    num_batches:
+        type: choice
+        options:
+            # - [4, 2, 2]  # arxiv, gcn, batch size = 1
+#             - [8, 4, 4]  # arxiv, gat, batch size = 1
+            - [16, 8, 8]
+#             - [1024, 512, 512]  # prod, gat, batch size = 1
+            # - [400, 200, 200]    # reddit
+    
+    graphmodel:
+        type: choice
+        options:
+#             - 'gcn'
+            # - 'gat'
+            - 'sage'
+    
+    num_layers:
+        type: choice
+        options:
+            - 3
+            
+    hidden_channels:
+        type: choice
+        options:
+            - 256

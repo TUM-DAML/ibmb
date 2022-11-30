@@ -1,0 +1,128 @@
+seml:
+    executable: /nfs/homedirs/qian/gr/run_ogbn.py
+    name: qcd_gr_exp
+    output_dir: /nfs/homedirs/qian/gr/logs
+    project_root_dir: /nfs/homedirs/qian/gr
+
+slurm:
+    experiments_per_job: 1
+    sbatch_options:
+        gres: gpu:1       # num GPUs
+        mem: 80G          # memory
+        cpus-per-task: 4  # num cores
+        time: 4-00:00     # max time, D-HH:MM
+        exclude: mdsi-gpu[01,02],gpu[15,16,17,18,19,20]
+        #        qos: interactive
+
+grid:
+
+    seed:
+        type: choice
+        options:
+            - 123132876
+            - 235412535
+            - 412341243
+            - 457234562
+            - 345385123
+            - 789023454
+            - 380182342
+            - 238179046
+            # - 331245324
+            # - 349081234
+
+    dataset_name: 
+        type: choice
+        options:
+            - 'products'
+        
+    inference:
+        type: choice
+        options: 
+            - True
+            # - False
+            
+    LBMB_val:
+        type: choice
+        options:
+            - True
+            # - False
+            
+    mode:
+        type: choice
+        options:
+            - 'n_sampling'
+
+    neighbor_sampling:
+        type: choice
+        options:
+            - 'batch_ppr'
+
+    batch_order.ordered:
+        type: choice
+        options:
+            # - True
+            - False
+            
+    batch_order.sampled:
+        type: choice
+        options:
+#             - True
+            - False
+
+
+    num_batches:
+        type: choice
+        options:
+            - [1200, 600, 600]
+            
+    
+    diffusion_param:
+        type: choice
+        options:
+            - 0.25
+    
+    part_topk:
+        type: choice
+        options:
+            - [1, 1]
+    
+    micro_batch:
+        type: choice
+        options:
+            - 1
+    
+    batch_size:
+        type: choice
+        options:
+            - 1
+
+    small_trainingset:
+        type: choice
+        options:
+            - 1
+#             - 0.001
+
+    n_sampling_params.n_nodes:
+        type: choice
+        options:
+            # - [12, 12, 10]
+            # - [12, 12, 12]
+            # - [13, 13, 13]
+            # - [15, 12, 10]
+            - [15, 10, 10]
+            
+                    
+    n_sampling_params.num_batches:
+        type: choice
+        options:
+            - [1200, 180, 9600]
+
+GAT:
+    fixed:
+        graphmodel: 'gat'
+        hidden_channels: 128
+        reg: 0.
+        heads: 4
+        
+        epoch_min: 300
+        epoch_max: 300

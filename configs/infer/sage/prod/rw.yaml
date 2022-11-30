@@ -1,0 +1,84 @@
+seml:
+    executable: /nfs/homedirs/qian/gr/infer.py
+    name: qcd_gr_exp
+    output_dir: /nfs/homedirs/qian/gr/logs
+    project_root_dir: /nfs/homedirs/qian/gr
+
+slurm:
+    experiments_per_job: 1
+    sbatch_options:
+        gres: gpu:1       # num GPUs
+        mem: 32G          # memory
+        cpus-per-task: 4  # num cores
+        time: 0-12:00     # max time, D-HH:MM
+        exclude: gpu15,gpu16,gpu17,gpu18,gpu19
+        #        qos: interactive
+        
+fixed:
+    dataset_name: 'products'
+    mode: 'rw_sampling'
+    neighbor_sampling: 'batch_ppr'
+    diffusion_param: 0.25
+    num_batches: [16, 8, 8]
+    part_topk: [1, 1]
+
+grid:
+
+#     rw_sampling_params.batch_size:
+#         type: choice
+#         options:
+#             - [1, 300000]
+
+#     rw_sampling_params.walk_length:
+#         type: choice
+#         options:
+#             - 1
+
+#     rw_sampling_params.batch_size:
+#         type: choice
+#         options:
+#             - [1, 250000]
+
+#     rw_sampling_params.walk_length:
+#         type: choice
+#         options:
+#             - 2
+
+#     rw_sampling_params.batch_size:
+#         type: choice
+#         options:
+#             - [1, 150000]
+
+#     rw_sampling_params.walk_length:
+#         type: choice
+#         options:
+#             - 4
+
+    rw_sampling_params.batch_size:
+        type: choice
+        options:
+            - [1, 90000]
+
+    rw_sampling_params.walk_length:
+        type: choice
+        options:
+            - 8
+            
+            
+#     fixed
+    rw_sampling_params.num_steps:
+        type: choice
+        options:
+            - 1
+            
+    rw_sampling_params.sample_coverage:
+        type: choice
+        options:
+            - 100
+
+    
+SAGE:
+    fixed:
+        graphmodel: 'sage'
+        hidden_channels: 256
+        num_layers: 3

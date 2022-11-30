@@ -1,0 +1,76 @@
+seml:
+    executable: /nfs/homedirs/qian/gr/infer.py
+    name: qcd_gr_exp
+    output_dir: /nfs/homedirs/qian/gr/logs
+    project_root_dir: /nfs/homedirs/qian/gr
+
+slurm:
+    experiments_per_job: 1
+    sbatch_options:
+        gres: gpu:1       # num GPUs
+        mem: 8G          # memory
+        cpus-per-task: 4  # num cores
+        time: 0-01:00     # max time, D-HH:MM
+        exclude: mdsi-gpu[01,02],gpu[02,08,15,16,17,18,19,20]
+        #        qos: interactive
+
+
+fixed:
+    dataset_name: 'arxiv'
+    mode: 'ppr'
+    neighbor_sampling: 'ppr'
+    diffusion_param: 0.25
+    num_batches: [4, 2, 2]
+    part_topk: [1, 1]
+    
+    
+grid:
+
+    ppr_params.neighbor_topk:
+        type: choice
+        options:
+            - 2
+            # - 4
+            # - 8
+            # - 16
+            # - 32
+            # - 64
+
+    ppr_params.merge_max_size:
+        type: choice
+        options:
+            - None
+            
+    ppr_params.primes_per_batch:
+        type: choice
+        options:
+            # - 500
+            # - 800
+            # - 1000
+            # - 2000
+            # - 3000
+            # - 4000
+            # - 5000
+            # - 8000
+            # - 9000
+            # - 10000
+            # - 12000
+            # - 15000
+            # - 16000
+            # - 20000
+            # - 25000
+            - 30000
+            - 40000
+            - 50000
+            - 60000
+    
+    ppr_params.pushflowthresh:
+        type: choice
+        options:
+            - 2e-4
+
+GAT:
+    fixed:
+        graphmodel: 'gat'
+        hidden_channels: 128
+        heads: 4

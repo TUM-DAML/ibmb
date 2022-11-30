@@ -1,0 +1,26 @@
+seml:
+    executable: /nfs/homedirs/qian/gr/run_100m_full_infer.py
+    name: qcd_gr_exp
+    output_dir: /nfs/homedirs/qian/gr/logs100
+    project_root_dir: /nfs/homedirs/qian/gr
+
+slurm:
+    experiments_per_job: 1
+    sbatch_options:
+        gres: gpu:1       # num GPUs
+        mem: 256G          # memory
+        cpus-per-task: 4  # num cores
+        time: 1-00:00     # max time, D-HH:MM
+        exclude: gpu15,gpu16,gpu17,gpu18,gpu19,gpu08,gpu11
+
+grid:
+    model_path:
+        type: choice
+        options:
+            - '/nfs/students/qian/papers100M_ppr_ppr_1_1_1_433828_[1, 1]/model_16380218264204705.pt'
+    
+    num_chunks: 
+        type: choice
+        options:
+            - 64
+
