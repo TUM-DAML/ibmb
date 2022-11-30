@@ -1,14 +1,16 @@
-import numpy as np
-import torch
 import logging
 import resource
 import time
-from sacred import Experiment
 import traceback
+
+import numpy as np
 import seml
-from data.data_preparation import check_consistence, load_data, graph_preprocess, config_transform
-from data.customed_dataset import MYDataset
+import torch
+from sacred import Experiment
+
 from batching import get_loader
+from data.customed_dataset import MYDataset
+from data.data_preparation import check_consistence, load_data, graph_preprocess, config_transform
 from models import DeeperGCN, GAT, SAGEModel
 from train.trainer import Trainer
 
@@ -78,15 +80,15 @@ def run(dataset_name,
         logging.info("Graph loaded!\n")
         disk_loading_time = time.time() - start_time
 
-        merge_max_size, neighbor_topk, primes_per_batch = config_transform(dataset_name,
-                                                                           graphmodel,
-                                                                           (len(train_indices),
-                                                                            len(val_indices),
-                                                                            len(test_indices)),
-                                                                           mode, neighbor_sampling,
-                                                                           graph.num_nodes,
-                                                                           num_batches,
-                                                                           ppr_params, ladies_params, )
+        merge_max_size, neighbor_topk, primes_per_batch, ppr_params = config_transform(dataset_name,
+                                                                                       graphmodel,
+                                                                                       (len(train_indices),
+                                                                                        len(val_indices),
+                                                                                        len(test_indices)),
+                                                                                       mode, neighbor_sampling,
+                                                                                       graph.num_nodes,
+                                                                                       num_batches,
+                                                                                       ppr_params, ladies_params, )
 
         start_time = time.time()
         graph_preprocess(graph)

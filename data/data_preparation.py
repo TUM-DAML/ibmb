@@ -70,7 +70,7 @@ def config_transform(dataset_name: str,
     else:
         neighbor_topk = ppr_params['neighbor_topk']
 
-    return merge_max_size, neighbor_topk, primes_per_batch
+    return merge_max_size, neighbor_topk, primes_per_batch, ppr_params
 
 
 def load_data(dataset_name: str, 
