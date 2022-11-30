@@ -1,20 +1,20 @@
-seml:
-    executable: /nfs/homedirs/qian/gr/run_ogbn.py
-    name: qcd_gr_exp
-    output_dir: /nfs/homedirs/qian/gr/logs
-    project_root_dir: /nfs/homedirs/qian/gr
-
-slurm:
-    experiments_per_job: 1
-    sbatch_options:
-        gres: gpu:1       # num GPUs
-        mem: 64G          # memory
-        cpus-per-task: 4  # num cores
-        time: 1-00:00     # max time, D-HH:MM
-        exclude: mdsi-gpu[01,02],gpu[02,15,16,17,18,19,20]
-        #        qos: interactive
-
-fixed:
+#seml:
+#    executable: /nfs/homedirs/qian/gr/run_ogbn.py
+#    name: qcd_gr_exp
+#    output_dir: /nfs/homedirs/qian/gr/logs
+#    project_root_dir: /nfs/homedirs/qian/gr
+#
+#slurm:
+#    experiments_per_job: 1
+#    sbatch_options:
+#        gres: gpu:1       # num GPUs
+#        mem: 64G          # memory
+#        cpus-per-task: 4  # num cores
+#        time: 1-00:00     # max time, D-HH:MM
+#        exclude: mdsi-gpu[01,02],gpu[02,15,16,17,18,19,20]
+#        #        qos: interactive
+#
+#fixed:
     dataset_name: 'products'
     inference: True
     LBMB_val: True
@@ -39,21 +39,4 @@ fixed:
     graphmodel: 'gcn'
     hidden_channels: 256
     reg: 1.e-4
-    heads: None
-
-        
-grid:
-
-    seed:
-        type: choice
-        options:
-            - 123132876
-            - 235412535
-            - 412341243
-            - 457234562
-            - 345385123
-            - 789023454
-            - 380182342
-            - 238179046
-            - 331245324
-            - 349081234
+    heads: null

@@ -1,140 +1,48 @@
-seml:
-    executable: /nfs/homedirs/qian/gr/run_ogbn.py
-    name: qcd_gr_exp
-    output_dir: /nfs/homedirs/qian/gr/logs
-    project_root_dir: /nfs/homedirs/qian/gr
+#seml:
+#    executable: /nfs/homedirs/qian/gr/run_ogbn.py
+#    name: qcd_gr_exp
+#    output_dir: /nfs/homedirs/qian/gr/logs
+#    project_root_dir: /nfs/homedirs/qian/gr
+#
+#slurm:
+#    experiments_per_job: 1
+#    sbatch_options:
+#        gres: gpu:1       # num GPUs
+#        mem: 64G          # memory
+#        cpus-per-task: 4  # num cores
+#        time: 1-00:00     # max time, D-HH:MM
+#        exclude: mdsi-gpu[01,02],gpu[15,16,17,18,19,20]
+#        #        qos: interactive
+#
+#grid
 
-slurm:
-    experiments_per_job: 1
-    sbatch_options:
-        gres: gpu:1       # num GPUs
-        mem: 64G          # memory
-        cpus-per-task: 4  # num cores
-        time: 1-00:00     # max time, D-HH:MM
-        exclude: mdsi-gpu[01,02],gpu[15,16,17,18,19,20]
-        #        qos: interactive
-
-grid:
-
-    seed:
-        type: choice
-        options:
-            - 123132876
-            - 235412535
-            - 412341243
-            - 457234562
-            - 345385123
-            - 789023454
-            - 380182342
-            - 238179046
-            - 331245324
-            - 349081234
-
-    dataset_name: 
-        type: choice
-        options:
-            - 'products'
+    dataset_name: 'products'
         
-    inference:
-        type: choice
-        options: 
-            - True
-              #             - False
-            
-    LBMB_val:
-        type: choice
-        options:
-            - True
-              #             - False
-            
-    mode:
-        type: choice
-        options:
-            - 'rw_sampling'
+    inference: True
+    LBMB_val: True
+    mode: 'rw_sampling'
 
-    neighbor_sampling:
-        type: choice
-        options:
-            - 'batch_ppr'
+    neighbor_sampling: 'batch_ppr'
 
 
-    batch_order.ordered:
-        type: choice
-        options:
-            # - True
-            - False
-            
-    batch_order.sampled:
-        type: choice
-        options:
-#             - True
-            - False
+    batch_order:
+        ordered: False
+        sampled: False
 
 
-    num_batches:
-        type: choice
-        options:
-            - [16, 8, 8]
-            
-    
-    diffusion_param:
-        type: choice
-        options:
-            - 0.25
-    
-    part_topk:
-        type: choice
-        options:
-            - [1, 1]
-    
-    micro_batch:
-        type: choice
-        options:
-            - 1
-    
-    batch_size:
-        type: choice
-        options:
-            - 1
+    num_batches: [16, 8, 8]
+    diffusion_param: 0.25
+    part_topk: [1, 1]
+    micro_batch: 1
+    batch_size: 1
+    small_trainingset: 1
+    rw_sampling_params:
+        batch_size: [80000, 5000]
+        num_steps: 16
+        walk_length: 2
+        sample_coverage: 100
 
-    small_trainingset:
-        type: choice
-        options:
-            - 1
-#             - 0.001
-
-            
-    rw_sampling_params.batch_size:
-        type: choice
-        options:
-            # - [50000, 5000]
-            # - [60000, 5000]
-            # - [70000, 5000]
-            # - [75000, 5000]
-            - [80000, 5000]
-            
-    rw_sampling_params.num_steps:
-        type: choice
-        options:
-            - 16
-            
-    rw_sampling_params.walk_length:
-        type: choice
-        options:
-            - 2
-            # - 3
-            
-    rw_sampling_params.sample_coverage:
-        type: choice
-        options:
-            - 100
-
-GCN:
-    fixed:
-        graphmodel: 'gcn'
-        hidden_channels: 256
-        reg: 1e-4
-        heads: None
-        
-        epoch_min: 300
-        epoch_max: 300
+    graphmodel: 'gcn'
+    hidden_channels: 256
+    reg: 1.e-4
+    heads: null
