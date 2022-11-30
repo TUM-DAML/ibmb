@@ -34,5 +34,5 @@
 
     graphmodel: 'gcn'
     hidden_channels: 256
-    reg: 1e-4
+    reg: 1.e-4
     heads: None
