@@ -7,8 +7,10 @@
 Reference implementation of influence-based mini-batching (IBMB), as proposed in:
 
 [**Influence-Based Mini-Batching for Graph Neural Networks**](https://www.cs.cit.tum.de/daml/ibmb)  
-Johannes Gasteiger, Chendi Qian, Stephan Günnemann  
+Johannes Gasteiger*, Chendi Qian*, Stephan Günnemann  
 Published at LoG 2022 (oral)
+
+*Both authors contributed equally. 
 
 ## Environment setup
 
