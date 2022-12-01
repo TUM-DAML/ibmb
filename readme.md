@@ -1,10 +1,20 @@
-Official GitHub repo for paper __Influence-Based Mini-Batching for Graph Neural Networks__ accepted at LoG conference 2022.
+# Influence-Based Mini-Batching
+
+<p align="center">
+<img src="https://user-images.githubusercontent.com/9202783/205024258-fa39efe0-0e50-4959-92f5-59f10462bddb.png" width="600">
+</p>
+
+Reference implementation of influence-based mini-batching (IBMB), as proposed in:
+
+[**Influence-Based Mini-Batching for Graph Neural Networks**](https://www.cs.cit.tum.de/daml/ibmb)  
+Johannes Gasteiger, Chendi Qian, Stephan Günnemann  
+Published at LoG 2022 (oral)
 
 ## Environment setup
 
-Officially we run our code with a single card Nvidia GTX1080Ti. Note that new GPUs e.g. RTX 3090Ti may not support older cuda version.
+The experiments in the paper were run on an Nvidia GTX1080Ti. Note that newer GPUs might not support this version of CUDA.
 
-We set up an anaconda environment with python 3.7
+We set up an Anaconda environment with Python 3.7
 
 ```angular2html
 conda create -n ibmb python=3.7
@@ -15,7 +25,7 @@ We use pytorch 1.8.1 with cudatoolkit 10.2
 
 `conda install pytorch==1.8.1 cudatoolkit=10.2 -c pytorch`
 
-Installation of PyG 1.7.0
+Install PyG 1.7.0
 
 ```
 pip install https://data.pyg.org/whl/torch-1.8.0%2Bcu102/torch_cluster-1.5.9-cp37-cp37m-linux_x86_64.whl
@@ -37,14 +47,12 @@ pip install parallel-sort==0.0.3  # please do not use new versions
 pip install python-tsp
 ```
 
-## Run our code
+## Replicate experiments
 
-### To replicate the results in Table 7 and curves in Figure 3, run with the yaml files under `configs/main_exps/`
-
-e.g.
+To replicate Table 7 and Figure 3, run with the yaml files under `configs/main_exps/`, e.g.
 
 `python run_ogbn.py with configs/main_exps/gcn/arxiv/ppr_based.yaml`
 
-### To replicate the results of inference experiments in Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`
+To replicate Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`
 
-See the paper appendix for more information about how we tune the hyperparameters, especially the baselines. 
+See the paper's appendix for more information about tuning hyperparameters of IBMB and the baselines. 
