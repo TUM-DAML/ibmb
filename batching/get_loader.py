@@ -221,7 +221,7 @@ def get_loader(mode: str,
 
     elif mode == 'rw_sampling':
         dir_name = f'./saint_cache'
-        if not os.path.isdir:
+        if not os.path.isdir(dir_name):
             os.mkdir(dir_name)
 
         if train:
