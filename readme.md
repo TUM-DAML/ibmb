@@ -47,6 +47,7 @@ pip install sacred
 pip install seml
 pip install parallel-sort==0.0.3  # please do not use new versions
 pip install python-tsp
+pip install psutil
 ```
 
 ## Replicate experiments
@@ -55,6 +56,6 @@ To replicate Table 7 and Figure 3, run with the yaml files under `configs/main_e
 
 `python run_ogbn.py with configs/main_exps/gcn/arxiv/ppr_based.yaml`
 
-To replicate Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`
+To replicate Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`. We recommend using [seml](https://github.com/TUM-DAML/seml) to tune the hyperparameters in large scale. 
 
 See the paper's appendix for more information about tuning hyperparameters of IBMB and the baselines. 
