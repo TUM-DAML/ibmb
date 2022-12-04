@@ -21,6 +21,8 @@ part_topk: [1, 1]
 micro_batch: 1
 batch_size: 1
 small_trainingset: 1
+full_infer: False
+clear_cache: True
 
 graphmodel: 'gcn'
 hidden_channels: 256
