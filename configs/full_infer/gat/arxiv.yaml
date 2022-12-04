@@ -1,0 +1,6 @@
+dataset_name: 'arxiv'
+num_batches: [8, 4, 4]
+graphmodel: 'gat'
+num_layers: 3
+hidden_channels: 128
+heads: 4

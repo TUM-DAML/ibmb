@@ -1,0 +1,5 @@
+dataset_name: 'reddit'
+num_batches: [8, 4, 4]
+graphmodel: 'gcn'
+num_layers: 2
+hidden_channels: 512

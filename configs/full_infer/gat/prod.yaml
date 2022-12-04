@@ -1,0 +1,6 @@
+dataset_name: 'products'
+num_batches: [1200, 600, 600]
+graphmodel: 'gat'
+num_layers: 3
+hidden_channels: 128
+heads: 4
