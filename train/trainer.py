@@ -66,6 +66,8 @@ class Trainer:
         pbar = tqdm(range(self.epoch_max)) if self.notebook else range(self.epoch_max)
         np.random.seed(2021)
 
+        if not os.path.isdir('./saved_models'):
+            os.mkdir('./saved_models')
         model_dir = os.path.join('./saved_models', comment)
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
