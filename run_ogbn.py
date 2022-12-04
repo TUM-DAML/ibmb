@@ -64,7 +64,10 @@ def run(dataset_name,
         lr=1e-3,
         num_layers=3,
         heads=None,
-        seed=None):
+        seed=None,
+
+        full_infer=True,
+        clear_cache=False):
     try:
 
         check_consistence(mode, neighbor_sampling, batch_order['ordered'], batch_order['sampled'])
@@ -196,6 +199,10 @@ def run(dataset_name,
         logging.info(f'after train: {torch.cuda.memory_allocated()}')
         logging.info(f'after train: {torch.cuda.memory_reserved()}')
 
+        if clear_cache:
+            dataset.set_split('train')
+            dataset.clear_cur_cache()
+
         gpu_memory = torch.cuda.max_memory_allocated()
         if inference:
             trainer.inference(dataset=dataset,
@@ -206,7 +213,9 @@ def run(dataset_name,
                               x=graph.x,
                               y=graph.y,
                               comment=comment,
-                              run_no=stamp)
+                              run_no=stamp,
+                              full_infer=full_infer,
+                              clear_cache=clear_cache,)
 
         runtime_train_lst = []
         runtime_self_val_lst = []
