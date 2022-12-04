@@ -35,7 +35,8 @@ def run(dataset_name,
         graphmodel,
         num_batches,
         hidden_channels,
-        num_layers):
+        num_layers,
+        heads=None):
     
 
     logging.info(
@@ -100,14 +101,14 @@ def run(dataset_name,
                     hidden_channels=hidden_channels,
                     out_channels=graph.y.max().item() + 1,
                     num_layers=num_layers,
-                    heads=4).to(device)
+                    heads=heads).to(device)
     elif graphmodel == 'sage':
         model = SAGEModel(num_node_features=graph.num_node_features,
                           num_classes=graph.y.max().item() + 1,
                           hidden_channels=hidden_channels,
                           num_layers=num_layers).to(device)
 
-    for _file in os.listdir(f'../pretrained/{graphmodel}_{dataset_name}/'):
+    for _file in os.listdir(f'./pretrained/{graphmodel}_{dataset_name}/'):
         no = _file.split('.')[0].split('_')[1]
         trainer.inference(dataset=dataset,
                           model=model,
