@@ -82,14 +82,14 @@ def load_data(dataset_name: str,
     :return:
     """
     if dataset_name.lower() in ['arxiv', 'products', 'papers100m']:
-        dataset = PygNodePropPredDataset(name="ogbn-{:s}".format(dataset_name), root='/nfs/students/qian/data')
+        dataset = PygNodePropPredDataset(name="ogbn-{:s}".format(dataset_name), root='./datasets')
         split_idx = dataset.get_idx_split()
         graph = dataset[0]
     elif dataset_name.lower().startswith('reddit'):
         if dataset_name == 'reddit2':
-            dataset = Reddit2('/nfs/students/qian/data/reddit2')
+            dataset = Reddit2('./datasets/reddit2')
         elif dataset_name == 'reddit':
-            dataset = Reddit('/nfs/students/qian/data/reddit')
+            dataset = Reddit('./datasets/reddit')
         else:
             raise ValueError
         graph = dataset[0]

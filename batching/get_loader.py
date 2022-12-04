@@ -220,7 +220,7 @@ def get_loader(mode: str,
                                              shuffle=True, num_workers=0)
 
     elif mode == 'rw_sampling':
-        dir_name = f'/nfs/students/qian/saint_cache'
+        dir_name = f'./saint_cache'
         if not os.path.isdir:
             os.mkdir(dir_name)
 

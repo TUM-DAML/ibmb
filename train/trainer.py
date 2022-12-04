@@ -66,7 +66,7 @@ class Trainer:
         pbar = tqdm(range(self.epoch_max)) if self.notebook else range(self.epoch_max)
         np.random.seed(2021)
 
-        model_dir = os.path.join('/nfs/students/qian', comment)
+        model_dir = os.path.join('./saved_models', comment)
         if not os.path.isdir(model_dir):
             os.mkdir(model_dir)
         model_path = os.path.join(model_dir, f'model_{run_no}.pt')
@@ -352,7 +352,7 @@ class Trainer:
                   adj=None,
                   x=None,
                   y=None,
-                  file_dir='/nfs/students/qian',
+                  file_dir='./saved_models',
                   comment='',
                   run_no='',
                   full_infer=True,
