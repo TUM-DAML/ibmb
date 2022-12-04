@@ -23,7 +23,7 @@
     neighbor_sampling: 'ppr'
     ppr_params:
         neighbor_topk: 16
-        merge_max_size: None
+        merge_max_size: null
         primes_per_batch: 9000
         pushflowthresh: 2.e-4
     batch_order:
