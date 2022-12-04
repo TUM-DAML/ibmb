@@ -1,23 +1,19 @@
-import numpy as np
-import torch
 import logging
+import os
 import resource
 import time
-from sacred import Experiment
-import pickle
-import seml
 import traceback
-import os
-from numba.typed import List
-from data.data_preparation import check_consistence, load_data, graph_preprocess, get_partitions, get_ppr_mat, \
-    config_transform
-from data.customed_dataset import MYDataset
-from neighboring import get_neighbors
-from neighboring.ppr_power_iteration import ppr_power_iter
+
+import numpy as np
+import seml
+import torch
+from sacred import Experiment
+
 from batching import get_loader
+from data.customed_dataset import MYDataset
+from data.data_preparation import check_consistence, load_data, graph_preprocess, config_transform
 from models import DeeperGCN, GAT, SAGEModel
 from train.trainer import Trainer
-from copy import deepcopy
 
 ex = Experiment()
 seml.setup_logger(ex)
@@ -65,7 +61,7 @@ def run(dataset_name,
         epoch_max=800,
         patience=100,
         num_layers=3,
-        heads=None,):
+        heads=None, ):
     try:
         seed = np.random.choice(2 ** 16)
         np.random.seed(seed)
@@ -85,15 +81,15 @@ def run(dataset_name,
         logging.info("Graph loaded!\n")
         disk_loading_time = time.time() - start_time
 
-        merge_max_size, neighbor_topk, primes_per_batch = config_transform(dataset_name,
-                                                                           graphmodel,
-                                                                           (len(train_indices),
-                                                                            len(val_indices),
-                                                                            len(test_indices)),
-                                                                           mode, neighbor_sampling,
-                                                                           graph.num_nodes,
-                                                                           num_batches,
-                                                                           ppr_params, ladies_params, )
+        merge_max_size, neighbor_topk, primes_per_batch, ppr_params = config_transform(dataset_name,
+                                                                                       graphmodel,
+                                                                                       (len(train_indices),
+                                                                                        len(val_indices),
+                                                                                        len(test_indices)),
+                                                                                       mode, neighbor_sampling,
+                                                                                       graph.num_nodes,
+                                                                                       num_batches,
+                                                                                       ppr_params, ladies_params, )
 
         start_time = time.time()
         graph_preprocess(graph)
@@ -131,7 +127,7 @@ def run(dataset_name,
                                                            LBMB_val=False,
                                                            train=False,
                                                            val=True,
-                                                           inference=inference,)
+                                                           inference=inference, )
 
         val_prep_time = time.time() - start_time
 

@@ -1,16 +1,17 @@
-import numpy as np
-import torch
 import logging
+import os
 import resource
 import time
-from sacred import Experiment
+
+import numpy as np
 import seml
-import os
-from data.data_preparation import load_data, graph_preprocess
+import torch
+from sacred import Experiment
+
 from data.customed_dataset import MYDataset
+from data.data_preparation import load_data, graph_preprocess
 from models import DeeperGCN, GAT, SAGEModel
 from train.trainer import Trainer
-
 
 ex = Experiment()
 seml.setup_logger(ex)
@@ -34,11 +35,7 @@ def run(dataset_name,
         graphmodel,
         num_batches,
         hidden_channels,
-        num_layers,
-        epoch_min=300,
-        epoch_max=800,
-        patience=100,
-        lr=1e-3):
+        num_layers):
     
 
     logging.info(
@@ -63,9 +60,9 @@ def run(dataset_name,
                       num_batches, 
                       micro_batch=1,
                       batch_size=1,
-                      epoch_max=epoch_max,
-                      epoch_min=epoch_min,
-                      patience=patience)
+                      epoch_max=0,
+                      epoch_min=1,
+                      patience=1)
 
     # train & val
     start_time = time.time()
@@ -83,8 +80,8 @@ def run(dataset_name,
                         graph.y.cpu().detach().numpy(),
                         graph.adj_t.to_scipy('csr'),
                         train_loader=None,
-                        val_loader=[None, None],
-                        test_loader=[None, None],
+                        val_loader=[None, None, None],
+                        test_loader=[None, None, None],
                         batch_order={'ordered': False, 'sampled': False},
                         cache_sub_adj=True,
                         cache_origin_adj=False,
@@ -119,7 +116,7 @@ def run(dataset_name,
                           adj=graph.adj_t,
                           x=graph.x,
                           y=graph.y,
-                          file_dir='../pretrained',
+                          file_dir='./pretrained',
                           comment=f'{graphmodel}_{dataset_name}',
                           run_no=no, 
                           full_infer=True, 

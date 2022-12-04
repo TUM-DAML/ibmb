@@ -66,10 +66,6 @@ def run(dataset_name,
         heads=None,
         seed=None):
     try:
-        seed = np.random.choice(2 ** 16)
-        np.random.seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.manual_seed(seed)
 
         check_consistence(mode, neighbor_sampling, batch_order['ordered'], batch_order['sampled'])
         logging.info(

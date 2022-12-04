@@ -2,7 +2,6 @@ import logging
 import resource
 import time
 
-import numpy as np
 import psutil
 import seml
 import torch
@@ -61,11 +60,6 @@ def run(dataset_name,
         num_layers=3,
         heads=None,
         device='cuda'):
-    seed = np.random.choice(2 ** 16)
-    np.random.seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.manual_seed(seed)
-
     check_consistence(mode, neighbor_sampling, batch_order['ordered'], batch_order['sampled'])
     logging.info(
         f'dataset: {dataset_name}, graphmodel: {graphmodel}, mode: {mode}, neighbor_sampling: {neighbor_sampling}')
@@ -75,15 +69,15 @@ def run(dataset_name,
     graph, (train_indices, val_indices, test_indices) = load_data(dataset_name, small_trainingset)
     disk_loading_time = time.time() - start_time
 
-    merge_max_size, neighbor_topk, primes_per_batch = config_transform(dataset_name,
-                                                                       graphmodel,
-                                                                       (len(train_indices),
-                                                                        len(val_indices),
-                                                                        len(test_indices)),
-                                                                       mode, neighbor_sampling,
-                                                                       graph.num_nodes,
-                                                                       num_batches,
-                                                                       ppr_params, ladies_params, )
+    merge_max_size, neighbor_topk, primes_per_batch, ppr_params = config_transform(dataset_name,
+                                                                                   graphmodel,
+                                                                                   (len(train_indices),
+                                                                                    len(val_indices),
+                                                                                    len(test_indices)),
+                                                                                   mode, neighbor_sampling,
+                                                                                   graph.num_nodes,
+                                                                                   num_batches,
+                                                                                   ppr_params, ladies_params, )
 
     logging.info(f'mem graph: {psutil.Process().memory_info().rss}\n')
 
