@@ -1,136 +1,24 @@
-seml:
-    executable: /nfs/homedirs/qian/gr/run_ogbn.py
-    name: qcd_gr_exp
-    output_dir: /nfs/homedirs/qian/gr/logs
-    project_root_dir: /nfs/homedirs/qian/gr
+dataset_name: 'products'
+inference: True
+LBMB_val: True
+mode: 'rw_sampling'
+neighbor_sampling: 'batch_ppr'
+batch_order:
+    ordered: False
+    sampled: False
+num_batches: [1200, 600, 600]
+diffusion_param: 0.25
+part_topk: [1, 1]
+micro_batch: 1
+batch_size: 1
+small_trainingset: 1
+rw_sampling_params:
+    batch_size: [12000, 100]
+    num_steps: 1200
+    walk_length: 2
+    sample_coverage: 100
 
-slurm:
-    experiments_per_job: 1
-    sbatch_options:
-        gres: gpu:1       # num GPUs
-        mem: 80G          # memory
-        cpus-per-task: 4  # num cores
-        time: 3-00:00     # max time, D-HH:MM
-        exclude: mdsi-gpu[01,02],gpu[15,16,17,18,19,20]
-        #        qos: interactive
-
-grid:
-
-    seed:
-        type: choice
-        options:
-            - 123132876
-            - 235412535
-            - 412341243
-            - 457234562
-            - 345385123
-            - 789023454
-            - 380182342
-            - 238179046
-            - 331245324
-            - 349081234
-
-    dataset_name: 
-        type: choice
-        options:
-            - 'products'
-        
-    inference:
-        type: choice
-        options: 
-            - True
-              #             - False
-            
-    LBMB_val:
-        type: choice
-        options:
-            - True
-              #             - False
-            
-    mode:
-        type: choice
-        options:
-            - 'rw_sampling'
-
-    neighbor_sampling:
-        type: choice
-        options:
-            - 'batch_ppr'
-
-
-    batch_order.ordered:
-        type: choice
-        options:
-            # - True
-            - False
-            
-    batch_order.sampled:
-        type: choice
-        options:
-#             - True
-            - False
-
-
-    num_batches:
-        type: choice
-        options:
-            - [1200, 600, 600]
-            
-    
-    diffusion_param:
-        type: choice
-        options:
-            - 0.25
-    
-    part_topk:
-        type: choice
-        options:
-            - [1, 1]
-    
-    micro_batch:
-        type: choice
-        options:
-            - 1
-    
-    batch_size:
-        type: choice
-        options:
-            - 1
-
-    small_trainingset:
-        type: choice
-        options:
-            - 1
-#             - 0.001
-
-            
-    rw_sampling_params.batch_size:
-        type: choice
-        options:
-            - [12000, 100]
-            
-    rw_sampling_params.num_steps:
-        type: choice
-        options:
-            - 1200
-            
-    rw_sampling_params.walk_length:
-        type: choice
-        options:
-            - 2
-            # - 3
-            
-    rw_sampling_params.sample_coverage:
-        type: choice
-        options:
-            - 100
-
-GAT:
-    fixed:
-        graphmodel: 'gat'
-        hidden_channels: 128
-        reg: 0.
-        heads: 4
-        
-        epoch_min: 300
-        epoch_max: 300
+graphmodel: 'gat'
+hidden_channels: 128
+reg: 0.
+heads: 4
