@@ -59,3 +59,5 @@ To replicate Table 7 and Figure 3, run with the yaml files under `configs/main_e
 To replicate Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`. We recommend using [seml](https://github.com/TUM-DAML/seml) to tune the hyperparameters in large scale. 
 
 See the paper's appendix for more information about tuning hyperparameters of IBMB and the baselines. 
+
+For the largest dataset `ogbn-papers100M`, we recommend you to run the notebook `dataprocess_100m.ipynb` first then proceed with `run_papers100m.py`. In order to perform full graph inference on such large dataset, we provide some tricks of tensor chunking, see `run_papers100m_full_infer.py` for more details. You need at least 256GB RAM for the `ogbn-papers100M` experiments. 
