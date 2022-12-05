@@ -61,7 +61,7 @@ class Trainer:
         #         writer = SummaryWriter('./runs')
         patience_count = 0
         best_accs = {'train': 0., 'self': 0., 'part': 0., 'ppr': 0.}
-        best_val_acc = 0.
+        best_val_acc = -1.
 
         pbar = tqdm(range(self.epoch_max)) if self.notebook else range(self.epoch_max)
         np.random.seed(2021)

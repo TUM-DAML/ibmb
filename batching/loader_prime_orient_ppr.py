@@ -91,6 +91,6 @@ def ppr_fixed_loader(ppr_mat, prime_indices, neighbors, primes_per_batch):
         
     union = lambda inputs: np.unique(np.concatenate(inputs))
     for p in prime_list:
-        batches.append((prime_indices[p], union(neighbors[p])))
+        batches.append((prime_indices[p], union(neighbors[p]).astype(np.int64)))
     
     return batches

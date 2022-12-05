@@ -1,12 +1,11 @@
 import numpy as np
-from tqdm import tqdm
 
 
-# @numba.njit(cache=True, parallel=True)
 def partition_ppr_loader(partitions, prime_indices, neighbor_list):
     n = len(partitions)
     batches = []
-    # for i in numba.prange(len(nodes)):
+    if isinstance(neighbor_list, list):
+        neighbor_list = np.array(neighbor_list, dtype=object)
     for i in range(n):
         intersect = np.intersect1d(partitions[i], prime_indices)
         ind = np.in1d(prime_indices, intersect)
