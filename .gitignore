@@ -3,6 +3,7 @@ __pycache__
 .ipynb_checkpoints
 logs
 logs100
+datasets
 *.npy
 *.pt
 *.pkl
