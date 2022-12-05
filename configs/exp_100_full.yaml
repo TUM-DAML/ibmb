@@ -1,5 +1,5 @@
 seml:
-    executable: /nfs/homedirs/qian/gr/run_100m_full_infer.py
+    executable: /nfs/homedirs/qian/gr/run_papers100m_full_infer.py
     name: qcd_gr_exp
     output_dir: /nfs/homedirs/qian/gr/logs100
     project_root_dir: /nfs/homedirs/qian/gr
