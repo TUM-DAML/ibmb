@@ -1,0 +1,2 @@
+model_path: './saved_models/papers100M_gcn_ppr_ppr_1_433828/model_16702449361026437321026465.pt'  # '/path/to/your/model'
+num_chunks: 64

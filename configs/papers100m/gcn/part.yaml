@@ -1,12 +1,8 @@
 dataset_name: 'papers100M'
 inference: True
-mode: 'ppr'
-neighbor_sampling: 'ppr'
-ladies_params:
-    sample_size: [433827, 867654, 867654]
-    n_nodes: [10, 10, 8]
-n_sampling_params:
-    num_batches: [256, 32, 48]
+LBMB_val: True
+mode: 'part'
+neighbor_sampling: 'batch_ppr'
 ppr_params:
     neighbor_topk: 96
     merge_max_size: null
@@ -16,13 +12,8 @@ batch_order:
     ordered: True
     sampled: False
 num_batches: [256, 32, 48]
-diffusion_param: 0.05
-part_topk: [1, 1]
+# diffusion_param: 0.05
 micro_batch: 1
-batch_size: 1
-small_trainingset: 1
-full_infer: False
-clear_cache: True
 
 graphmodel: 'gcn'
 hidden_channels: 256

@@ -1,0 +1,21 @@
+dataset_name: 'papers100M'
+inference: True
+LBMB_val: True
+mode: 'part'
+neighbor_sampling: 'batch_ppr'
+ppr_params:
+    neighbor_topk: 96
+    merge_max_size: null
+    primes_per_batch: 5000
+    pushflowthresh: 2.e-5
+batch_order:
+    ordered: True
+    sampled: False
+num_batches: [256, 32, 48]
+# diffusion_param: 0.05
+micro_batch: 1
+
+graphmodel: 'gcn'
+hidden_channels: 256
+reg: 1.e-4
+num_layers: 3
