@@ -1,18 +1,16 @@
-import numpy as np
-import torch
 import logging
 import time
-from sacred import Experiment
-import pickle
-import seml
-import os
 from collections import defaultdict
-from data.data_preparation import load_data, graph_preprocess
+
+import numpy as np
+import seml
+from sacred import Experiment
+from sklearn.metrics import f1_score
+
+from data.data_preparation import load_data
 from models import DeeperGCN
 from models.DeeperGCN import MyGCNConv
-from sklearn.metrics import f1_score
 from models.chunk_beta import *
-
 
 ex = Experiment()
 seml.setup_logger(ex)
@@ -32,22 +30,20 @@ def config():
 
 
 @ex.automain
-def run(model_path = '',
+def run(model_path='',
         num_chunks=64,
-        hidden_channels = 256,
-        num_layers=3, 
-        device = 'cuda'):
-
+        hidden_channels=256,
+        num_layers=3,
+        device='cuda'):
     start_time = time.time()
     graph, (train_indices, val_indices, test_indices) = load_data('papers100M', 1)
     logging.info("Graph loaded!\n")
     disk_loading_time = time.time() - start_time
 
     start_time = time.time()
-    # graph_preprocess(graph)
     graph.y = torch.nan_to_num(graph.y, nan=-1).to(torch.long).reshape(-1)
     graph.edge_index = None
-    graph.adj_t = torch.load('/nfs/students/qian/data/papers100m/adj.pt')
+    graph.adj_t = torch.load('/nfs/students/qian/adj.pt')
     logging.info("Graph processed!\n")
     graph_preprocess_time = time.time() - start_time
 
@@ -55,10 +51,10 @@ def run(model_path = '',
                       num_classes=graph.y.max().item() + 1,
                       hidden_channels=hidden_channels,
                       num_layers=num_layers).to(device)
-        
+
     # full infer
     model.load_state_dict(torch.load(model_path))
-    
+
     model.eval()
     start_time = time.time()
     mask = np.union1d(val_indices, test_indices)
@@ -88,13 +84,13 @@ def run(model_path = '',
                     x = chunk_add_beta(x, l.bias, num_chunks)
             elif isinstance(l, (torch.nn.Linear, torch.nn.LayerNorm)):
                 x = general_chunk_forward_beta(l, x, num_chunks)
-            else:   # relu, dropout
+            else:  # relu, dropout
                 x = chunk_nonparam_layer(x, l, num_chunks)
-    
+
     x = x.numpy()
-    
+
     database = defaultdict(list)
-    
+
     for cat in ['val', 'test']:
         nodes = val_indices if cat == 'val' else test_indices
         _mask = val_mask if cat == 'val' else test_mask
@@ -110,7 +106,7 @@ def run(model_path = '',
         logging.info("full_{}_acc: {:.3f}, full_{}_f1: {:.3f}, ".format(cat, acc, cat, f1))
 
     database['full_inference_time'].append(time.time() - start_time)
-    
+
     database['disk_loading_time'].append(disk_loading_time)
     database['graph_preprocess_time'].append(graph_preprocess_time)
 
