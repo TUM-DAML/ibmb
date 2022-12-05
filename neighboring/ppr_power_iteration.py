@@ -22,6 +22,8 @@ def get_topk_neighbors_mask(
     ones = index.new_ones(1).expand_as(index)
     num_neighbors = segment_coo(ones, index, dim_size=num_nodes)
     max_num_neighbors = num_neighbors.max()
+    
+    topk = min(topk, max_num_neighbors)
 
     # Create a tensor of size [num_nodes, max_num_neighbors] to sort the PPR scores of the neighbors.
     # Use zeros so we can easily remove unused PPR scores later.
