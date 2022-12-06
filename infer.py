@@ -12,7 +12,7 @@ from sacred import Experiment
 from batching import get_loader
 from data.customed_dataset import MYDataset
 from data.data_preparation import check_consistence, load_data, graph_preprocess, config_transform
-from models import DeeperGCN, GAT, SAGEModel
+from models.get_model import get_model
 from train.trainer import Trainer
 
 ex = Experiment()
@@ -45,7 +45,7 @@ def run(dataset_name,
         micro_batch=1,
         batch_size=1,
         small_trainingset=1,
-        batch_order={'ordered': False, 'sampled': False},
+        batch_order=None,
 
         cache_sub_adj=True,
         cache_origin_adj=False,
@@ -62,6 +62,8 @@ def run(dataset_name,
         patience=100,
         num_layers=3,
         heads=None, ):
+    if batch_order is None:
+        batch_order = {'ordered': False, 'sampled': False}
     try:
         seed = np.random.choice(2 ** 16)
         np.random.seed(seed)
@@ -131,11 +133,6 @@ def run(dataset_name,
 
         val_prep_time = time.time() - start_time
 
-        # inference
-        start_time = time.time()
-
-        infer_prep_time = time.time() - start_time
-
         # common preprocess
         start_time = time.time()
         dataset = MYDataset(graph.x.cpu().detach().numpy(),
@@ -151,26 +148,13 @@ def run(dataset_name,
                                        'ladies' in [mode, neighbor_sampling]))
         caching_time = time.time() - start_time
 
-        #     return dataset
-        if graphmodel == 'gcn':
-            model = DeeperGCN(num_node_features=graph.num_node_features,
-                              num_classes=graph.y.max().item() + 1,
-                              hidden_channels=hidden_channels,
-                              num_layers=num_layers).to(device)
-
-        elif graphmodel == 'gat':
-            model = GAT(in_channels=graph.num_node_features,
-                        hidden_channels=hidden_channels,
-                        out_channels=graph.y.max().item() + 1,
-                        num_layers=num_layers,
-                        heads=heads).to(device)
-        elif graphmodel == 'sage':
-            model = SAGEModel(num_node_features=graph.num_node_features,
-                              num_classes=graph.y.max().item() + 1,
-                              hidden_channels=hidden_channels,
-                              num_layers=num_layers).to(device)
-        else:
-            raise NotImplementedError
+        model = get_model(graphmodel,
+                          graph.num_node_features,
+                          graph.y.max().item() + 1,
+                          hidden_channels,
+                          num_layers,
+                          heads,
+                          device)
 
         for _file in os.listdir(f'./pretrained/{graphmodel}_{dataset_name}/'):
             no = _file.split('.')[0].split('_')[1]
@@ -193,7 +177,6 @@ def run(dataset_name,
             'disk_loading_time': disk_loading_time,
             'graph_preprocess_time': graph_preprocess_time,
             'val_prep_time': val_prep_time,
-            'infer_prep_time': infer_prep_time,
             'caching_time': caching_time,
             'gpu_memory': torch.cuda.max_memory_allocated(),
             'max_memory': 1024 * resource.getrusage(resource.RUSAGE_SELF).ru_maxrss

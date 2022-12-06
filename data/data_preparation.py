@@ -14,22 +14,23 @@ from .const import get_ppr_default
 
 
 def check_consistence(mode: str,
-                      neighbor_sampling: str, 
-                      order: bool, 
+                      neighbor_sampling: str,
+                      order: bool,
                       sample: bool):
-    assert mode in ['ppr', 'rand', 'randfix', 'part', 'clustergcn', 'n_sampling', 'rw_sampling', 'ladies', 'part+ppr', 'ppr_shadow']
+    assert mode in ['ppr', 'rand', 'randfix', 'part', 'clustergcn', 'n_sampling', 'rw_sampling', 'ladies', 'part+ppr',
+                    'ppr_shadow']
     if mode in ['ppr', 'part', 'randfix', 'part+ppr']:
-        assert (sample and order) == False
+        assert not (sample and order)
     else:
-        assert (sample or order) == False
-    
+        assert not (sample or order)
+
     if mode in ['ppr', 'rand', 'part+ppr']:
         assert neighbor_sampling in ['ppr', 'hk', 'pnorm']
     elif mode == 'part':
-        assert neighbor_sampling in ['ladies', 'batch_hk', 'batch_ppr',]
+        assert neighbor_sampling in ['ladies', 'batch_hk', 'batch_ppr', ]
     elif mode == 'clustergcn':
-        assert (sample or order) == False
-        
+        assert not (sample or order)
+
     if neighbor_sampling == 'ladies':
         assert mode == 'part'
 
@@ -73,7 +74,7 @@ def config_transform(dataset_name: str,
     return merge_max_size, neighbor_topk, primes_per_batch, ppr_params
 
 
-def load_data(dataset_name: str, 
+def load_data(dataset_name: str,
               small_trainingset: float):
     """
 
@@ -99,14 +100,14 @@ def load_data(dataset_name: str,
         graph.train_mask, graph.val_mask, graph.test_mask = None, None, None
     else:
         raise NotImplementedError
-        
+
     train_indices = split_idx["train"].cpu().detach().numpy()
-    
+
     if small_trainingset < 1:
         np.random.seed(2021)
-        train_indices = np.sort(np.random.choice(train_indices, 
-                                                 size=int(len(train_indices) * small_trainingset), 
-                                                 replace=False, 
+        train_indices = np.sort(np.random.choice(train_indices,
+                                                 size=int(len(train_indices) * small_trainingset),
+                                                 replace=False,
                                                  p=None))
 
     val_indices = split_idx["valid"].cpu().detach().numpy()
@@ -147,9 +148,9 @@ class GraphPreprocess:
         return graph
 
 
-def graph_preprocess(graph: Data, 
-                     self_loop: bool = True, 
-                     to_undirected: bool = True, 
+def graph_preprocess(graph: Data,
+                     self_loop: bool = True,
+                     to_undirected: bool = True,
                      normalization: str = 'sym'):
     """
 
@@ -165,28 +166,27 @@ def graph_preprocess(graph: Data,
         graph.y = torch.nan_to_num(graph.y, nan=-1)
     if graph.y.dtype != torch.int64:
         graph.y = graph.y.to(torch.long)
-    
+
     row, col = graph.edge_index.cpu().detach().numpy()
     graph.edge_index = None
     data = np.ones_like(row, dtype=np.bool_)
     adj = csr_matrix((data, (row, col)), shape=(graph.num_nodes, graph.num_nodes))
-        
+
     if to_undirected:
         adj += adj.transpose()
-        
+
     if self_loop:
         adj += eye(graph.num_nodes, dtype=np.bool_)
-    
+
     adj = normalize_adjmat(adj, normalization, inplace=True)
     graph.adj_t = SparseTensor.from_scipy(adj)
-    
-    
-def get_partitions(mode: str, 
-                   mat: SparseTensor, 
+
+
+def get_partitions(mode: str,
+                   mat: SparseTensor,
                    indices: np.ndarray,
-                   num_parts: int, 
+                   num_parts: int,
                    force: bool = False) -> list:
-    
     partitions = None
     if mode in ['part', 'clustergcn', 'part+ppr'] or force:
         if mode == 'part+ppr':
@@ -198,19 +198,18 @@ def get_partitions(mode: str,
 
         partitions = []
         for i in range(len(partptr) - 1):
-            partitions.append(perm[partptr[i] : partptr[i + 1]].cpu().detach().numpy())
+            partitions.append(perm[partptr[i]: partptr[i + 1]].cpu().detach().numpy())
 
     return partitions
 
 
-def get_ppr_mat(mode: str, 
+def get_ppr_mat(mode: str,
                 neighbor_sampling: str,
-                prime_indices: np.ndarray, 
-                scipy_adj: csr_matrix, 
-                topk=256, 
-                eps=None, 
+                prime_indices: np.ndarray,
+                scipy_adj: csr_matrix,
+                topk=256,
+                eps=None,
                 alpha=0.05) -> csr_matrix:
-    
     ppr_mat = None
     if 'ppr' in [mode, neighbor_sampling]:
         # if too many prime nodes, we don't need many pairs

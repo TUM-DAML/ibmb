@@ -1,9 +1,9 @@
 import logging
+import pickle
 import resource
 import time
 import traceback
 
-import pickle
 import numpy as np
 import seml
 import torch
@@ -11,8 +11,8 @@ from sacred import Experiment
 
 from batching import get_loader
 from data.customed_dataset import MYDataset
-from data.data_preparation import check_consistence, load_data, graph_preprocess, config_transform
-from models import DeeperGCN, GAT, SAGEModel
+from data.data_preparation import check_consistence, load_data, config_transform
+from models.GCN import GCN
 from train.trainer import Trainer
 
 ex = Experiment()
@@ -188,10 +188,10 @@ def run(dataset_name,
         stamp = ''.join(str(time.time()).split('.')) + str(seed)
         logging.info(f'model info: {comment}/model_{stamp}.pt')
         if graphmodel == 'gcn':
-            model = DeeperGCN(num_node_features=graph.num_node_features,
-                              num_classes=graph.y.max().item() + 1,
-                              hidden_channels=hidden_channels,
-                              num_layers=num_layers).to(device)
+            model = GCN(num_node_features=graph.num_node_features,
+                        num_classes=graph.y.max().item() + 1,
+                        hidden_channels=hidden_channels,
+                        num_layers=num_layers).to(device)
         else:
             raise NotImplementedError
 

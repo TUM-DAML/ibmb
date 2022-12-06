@@ -1,7 +1,5 @@
 import numba
-from numba.typed import List
 import numpy as np
-from scipy.sparse import find
 import parallel_sort
 
 

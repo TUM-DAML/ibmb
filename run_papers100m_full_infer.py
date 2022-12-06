@@ -8,8 +8,7 @@ from sacred import Experiment
 from sklearn.metrics import f1_score
 
 from data.data_preparation import load_data
-from models import DeeperGCN
-from models.DeeperGCN import MyGCNConv
+from models.GCN import GCN, MyGCNConv
 from models.chunk_beta import *
 
 ex = Experiment()
@@ -47,10 +46,10 @@ def run(model_path='',
     logging.info("Graph processed!\n")
     graph_preprocess_time = time.time() - start_time
 
-    model = DeeperGCN(num_node_features=graph.num_node_features,
-                      num_classes=graph.y.max().item() + 1,
-                      hidden_channels=hidden_channels,
-                      num_layers=num_layers).to(device)
+    model = GCN(num_node_features=graph.num_node_features,
+                num_classes=graph.y.max().item() + 1,
+                hidden_channels=hidden_channels,
+                num_layers=num_layers).to(device)
 
     # full infer
     model.load_state_dict(torch.load(model_path))
