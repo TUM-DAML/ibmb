@@ -333,19 +333,18 @@ class IBMBNodeLoader(BaseLoader):
         return ceil(len(self.node_wise_out_aux_pairs) / self._batchsize)
 
     def __collate__(self, data_list):
-        if len(data_list) == 1:
-            assert isinstance(data_list[0], Data)
+        if len(data_list) == 1 and isinstance(data_list[0], Data):
             return data_list[0]
-        else:
-            out, aux = zip(*data_list)
-            out = np.concatenate(out)
-            aux = np.unique(np.concatenate(aux))  # still need it to be overlapping
-            mask = torch.from_numpy(np.in1d(aux, out))
-            aux = torch.from_numpy(aux)
 
-            subg = self.get_subgraph(aux,
-                                     self.original_graph,
-                                     self.return_edge_index_type,
-                                     self.adj,
-                                     output_node_mask=mask)
-            return subg
+        out, aux = zip(*data_list)
+        out = np.concatenate(out)
+        aux = np.unique(np.concatenate(aux))  # still need it to be overlapping
+        mask = torch.from_numpy(np.in1d(aux, out))
+        aux = torch.from_numpy(aux)
+
+        subg = self.get_subgraph(aux,
+                                 self.original_graph,
+                                 self.return_edge_index_type,
+                                 self.adj,
+                                 output_node_mask=mask)
+        return subg
