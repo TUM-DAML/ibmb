@@ -2,29 +2,18 @@ import torch
 from torch_geometric.nn import GCNConv
 from torch_sparse import SparseTensor, matmul
 
-from .chunk_func import chunked_matmul, chunked_sp_matmul, general_chunk_forward
+from .chunk_func import chunked_sp_matmul, general_chunk_forward
 
 
 class MyGCNConv(GCNConv):
     def forward(self, x, edge_index):
-        x = torch.matmul(x, self.weight)
-
+        x = self.lin(x)
         out = matmul(edge_index, x, reduce=self.aggr)
-
-        if self.bias is not None:
-            out += self.bias
-
         return out
     
     def chunked_pass(self, x, edge_index, num_chunks):
-        
-        x = chunked_matmul(self.weight, x, num_chunks)
-        
-        x = chunked_sp_matmul(edge_index, x, num_chunks, reduce=self.aggr, device=self.weight.device)
-            
-        if self.bias is not None:
-            x += self.bias.cpu()
-            
+        x = general_chunk_forward(self.lin, x, num_chunks)
+        x = chunked_sp_matmul(edge_index, x, num_chunks, reduce=self.aggr, device=x.device)
         return x
         
 
@@ -57,7 +46,7 @@ class GCN(torch.nn.Module):
         self.p_list.append({'params': self.layers[-1].parameters(), 'weight_decay': 0.})
 
     def forward(self, data):
-        x, adjs, prime_index = data.x, data.adj, data.idx
+        x, adjs, prime_index = data.x, data.edge_index, data.output_node_mask
         
         if isinstance(adjs, SparseTensor):
 
