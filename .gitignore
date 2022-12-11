@@ -4,8 +4,10 @@ __pycache__
 logs
 logs100
 datasets
+saint_cache
+saved_models
+runs
 *.npy
 *.pt
 *.pkl
 *.xlsx
-runs
