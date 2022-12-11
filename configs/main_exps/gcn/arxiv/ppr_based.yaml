@@ -1,57 +1,23 @@
-# seml:
-#     executable: /nfs/homedirs/qian/gr/run_ogbn.py
-#     name: qcd_gr_exp
-#     output_dir: /nfs/homedirs/qian/gr/logs
-#     project_root_dir: /nfs/homedirs/qian/gr
-
-# slurm:
-#     experiments_per_job: 1
-#     sbatch_options:
-#         gres: gpu:1       # num GPUs
-#         mem: 8G          # memory
-#         cpus-per-task: 4  # num cores
-#         time: 0-03:00     # max time, D-HH:MM
-#         exclude: mdsi-gpu[01,02],gpu[15,16,17,18,19,20]
-#         #        qos: interactive
-
-# fixed:
     dataset_name: 'arxiv'
-    diffusion_param: 0.25
     inference: True
     LBMB_val: True
     mode: 'ppr'
-    neighbor_sampling: 'ppr'
     ppr_params:
         neighbor_topk: 16
         merge_max_size: null
         primes_per_batch: 9000
-        pushflowthresh: 2.e-4
-    batch_order:
-        ordered: True
-        sampled: False
-    num_batches: [4, 2, 2]
-    part_topk: [1, 1]
+        alpha: 0.25
+        eps: 2.e-4
+    batch_params:
+        num_batches: [4, 2, 2]
+        part_topk: [1, 1]
+        alpha: 0.25
     micro_batch: 1
     batch_size: 1
+    batch_order: 'order'
     small_trainingset: 1
-    
+
     graphmodel: 'gcn'
     hidden_channels: 256
     reg: 1.e-4
     num_layers: 3
-    
-# grid:
-
-#     seed:
-#         type: choice
-#         options:
-#             - 123132876
-#             - 235412535
-#             - 412341243
-#             - 457234562
-#             - 345385123
-#             - 789023454
-#             - 380182342
-#             - 238179046
-#             - 331245324
-#             - 349081235
