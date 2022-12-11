@@ -1,5 +1,0 @@
-dataset_name: 'reddit'
-num_batches: [8, 4, 4]
-graphmodel: 'sage'
-num_layers: 3
-hidden_channels: 256

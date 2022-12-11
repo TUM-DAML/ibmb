@@ -1,6 +1,0 @@
-dataset_name: 'reddit'
-num_batches: [400, 200, 200]
-graphmodel: 'gat'
-heads: 4
-num_layers: 2    # reddit
-hidden_channels: 64     # reddit

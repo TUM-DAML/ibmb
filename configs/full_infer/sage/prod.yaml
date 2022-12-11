@@ -1,5 +1,0 @@
-dataset_name: 'products'
-num_batches: [16, 8, 8]
-graphmodel: 'sage'
-num_layers: 3
-hidden_channels: 256

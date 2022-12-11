@@ -1,5 +1,0 @@
-dataset_name: 'arxiv'
-num_batches: [4, 2, 2]
-graphmodel: 'sage'
-num_layers: 3
-hidden_channels: 256

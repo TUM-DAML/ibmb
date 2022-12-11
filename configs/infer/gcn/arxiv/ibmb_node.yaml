@@ -1,0 +1,16 @@
+    dataset_name: 'arxiv'
+    mode: 'ppr'
+    ppr_params:
+        neighbor_topk: 16   # to be modified
+        merge_max_size: null
+        primes_per_batch: 9000  # to be modified
+        alpha: 0.25
+        eps: 2.e-4
+    batch_size: 1
+    full_graph_chunks: 4
+
+    graphmodel: 'gcn'
+    hidden_channels: 256
+    num_layers: 3
+
+    model_dir: saved_models/arxiv_gcn_ladies

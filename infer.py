@@ -1,7 +1,6 @@
 import logging
 import os
 import resource
-import time
 import traceback
 
 import numpy as np
@@ -9,9 +8,8 @@ import seml
 import torch
 from sacred import Experiment
 
-from batching import get_loader
-from data.customed_dataset import MYDataset
-from data.data_preparation import check_consistence, load_data, graph_preprocess, config_transform
+from dataloaders.get_loaders import get_loaders
+from data.data_preparation import load_data, GraphPreprocess
 from models.get_model import get_model
 from train.trainer import Trainer
 
@@ -34,119 +32,54 @@ def config():
 
 @ex.automain
 def run(dataset_name,
-        graphmodel,
         mode,
-        neighbor_sampling,
-        diffusion_param,
-        num_batches,
-        hidden_channels,
-        part_topk,
-
-        micro_batch=1,
-        batch_size=1,
-        small_trainingset=1,
-        batch_order=None,
-
-        cache_sub_adj=True,
-        cache_origin_adj=False,
-
-        inference=True,
+        batch_size,
+        full_graph_chunks,
+        model_dir,
 
         ppr_params=None,
+        batch_params=None,
         n_sampling_params=None,
         rw_sampling_params=None,
         ladies_params=None,
+        shadow_ppr_params=None,
+        rand_ppr_params=None,
 
-        epoch_min=300,
-        epoch_max=800,
-        patience=100,
+        graphmodel='gcn',
+        hidden_channels=256,
         num_layers=3,
         heads=None, ):
-    if batch_order is None:
-        batch_order = {'ordered': False, 'sampled': False}
     try:
-        seed = np.random.choice(2 ** 16)
-        np.random.seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.manual_seed(seed)
 
-        check_consistence(mode, neighbor_sampling, batch_order['ordered'], batch_order['sampled'])
-
-        logging.info(
-            f'dataset: {dataset_name}, graphmodel: {graphmodel}, mode: {mode}, neighbor_sampling: {neighbor_sampling}, '
-            f'num_batches: {num_batches}, batch_order: {batch_order}, part_topk: {part_topk}, micro_batch: {micro_batch}, '
-            f'rw_sampling_params: {rw_sampling_params}, n_sampling_params: {n_sampling_params}, ladies_params: {ladies_params}')
+        logging.info(f'dataset: {dataset_name}, graphmodel: {graphmodel}, mode: {mode}')
 
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        start_time = time.time()
-        graph, (train_indices, val_indices, test_indices) = load_data(dataset_name, small_trainingset)
+        graph, (train_indices, val_indices, test_indices) = load_data(dataset_name, 1,
+                                                                      GraphPreprocess(True, True))
         logging.info("Graph loaded!\n")
-        disk_loading_time = time.time() - start_time
 
-        merge_max_size, neighbor_topk, primes_per_batch, ppr_params = config_transform(dataset_name,
-                                                                                       graphmodel,
-                                                                                       (len(train_indices),
-                                                                                        len(val_indices),
-                                                                                        len(test_indices)),
-                                                                                       mode, neighbor_sampling,
-                                                                                       graph.num_nodes,
-                                                                                       num_batches,
-                                                                                       ppr_params, ladies_params, )
+        trainer = Trainer(mode, full_graph_chunks, batch_size=1, )
 
-        start_time = time.time()
-        graph_preprocess(graph)
-        logging.info("Graph processed!\n")
-        graph_preprocess_time = time.time() - start_time
-
-        trainer = Trainer(mode,
-                          neighbor_sampling,
-                          num_batches,
-                          micro_batch=micro_batch,
-                          batch_size=batch_size,
-                          epoch_max=epoch_max,
-                          epoch_min=epoch_min,
-                          patience=patience)
-
-        # train & val
-        start_time = time.time()
-
-        train_loader, val_loader, test_loader = get_loader(mode,
-                                                           dataset_name,
-                                                           neighbor_sampling,
-                                                           graph.adj_t,
-                                                           (train_indices, val_indices, test_indices),
-                                                           neighbor_topk,
-                                                           ppr_params,
-                                                           part_topk,
-                                                           graph.num_nodes,
-                                                           merge_max_size,
-                                                           num_batches,
-                                                           primes_per_batch,
-                                                           num_layers,
-                                                           diffusion_param,
-                                                           n_sampling_params,
-                                                           rw_sampling_params,
-                                                           LBMB_val=False,
-                                                           train=False,
-                                                           val=True,
-                                                           inference=inference, )
-
-        val_prep_time = time.time() - start_time
-
-        # common preprocess
-        start_time = time.time()
-        dataset = MYDataset(graph.x.cpu().detach().numpy(),
-                            graph.y.cpu().detach().numpy(),
-                            graph.adj_t.to_scipy('csr'),
-                            train_loader=train_loader,
-                            val_loader=val_loader,
-                            test_loader=test_loader,
-                            batch_order=batch_order,
-                            cache_sub_adj=cache_sub_adj,
-                            cache_origin_adj=cache_origin_adj,
-                            cache=not (mode in ['n_sampling', 'rand', 'rw_sampling', 'ppr_shadow'] or
-                                       'ladies' in [mode, neighbor_sampling]))
-        caching_time = time.time() - start_time
+        (_,
+         self_val_loader,
+         ppr_val_loader,
+         batch_val_loader,
+         self_test_loader,
+         ppr_test_loader,
+         batch_test_loader) = get_loaders(
+            graph,
+            (train_indices, val_indices, test_indices),
+            batch_size,
+            mode,
+            ppr_params,
+            batch_params,
+            rw_sampling_params,
+            shadow_ppr_params,
+            rand_ppr_params,
+            ladies_params,
+            n_sampling_params,
+            inference=True,
+            ibmb_val=False)
 
         model = get_model(graphmodel,
                           graph.num_node_features,
@@ -156,28 +89,24 @@ def run(dataset_name,
                           heads,
                           device)
 
-        for _file in os.listdir(f'./pretrained/{graphmodel}_{dataset_name}/'):
-            no = _file.split('.')[0].split('_')[1]
-            trainer.inference(dataset=dataset,
-                              model=model,
-                              val_nodes=val_indices,
-                              test_nodes=test_indices,
-                              adj=graph.adj_t,
-                              x=graph.x,
-                              y=graph.y,
-                              file_dir='./pretrained',
-                              comment=f'{graphmodel}_{dataset_name}',
-                              run_no=no,
-                              full_infer=False,
-                              record_numbatch=True)
-        #         break
+        for _file in os.listdir(model_dir):
+            if not _file.endswith('.pt'):
+                continue
+            model_path = os.path.join(model_dir, _file)
+            model.load_state_dict(torch.load(model_path))
+            model.eval()
+
+            trainer.inference(self_val_loader,
+                              ppr_val_loader,
+                              batch_val_loader,
+                              self_test_loader,
+                              ppr_test_loader,
+                              batch_test_loader,
+                              model, )
+
+            trainer.full_graph_inference(model, graph, val_indices, test_indices)
 
         results = {
-            'seed': seed,
-            'disk_loading_time': disk_loading_time,
-            'graph_preprocess_time': graph_preprocess_time,
-            'val_prep_time': val_prep_time,
-            'caching_time': caching_time,
             'gpu_memory': torch.cuda.max_memory_allocated(),
             'max_memory': 1024 * resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         }

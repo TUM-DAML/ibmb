@@ -1,5 +1,0 @@
-dataset_name: 'arxiv'
-num_batches: [4, 2, 2]  # arxiv, gcn, batch size = 1
-graphmodel: 'gcn'
-num_layers: 3
-hidden_channels: 256
