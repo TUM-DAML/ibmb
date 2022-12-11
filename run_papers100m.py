@@ -61,12 +61,12 @@ def run(dataset_name,
         seed=None):
     try:
 
-        check_consistence(mode, neighbor_sampling, batch_order['ordered'], batch_order['sampled'])
+        check_consistence(mode, batch_order)
         logging.info(
             f'dataset: {dataset_name}, graphmodel: {graphmodel}, mode: {mode}, neighbor_sampling: {neighbor_sampling}')
 
         start_time = time.time()
-        graph, (train_indices, val_indices, test_indices) = load_data(dataset_name, small_trainingset=1)
+        graph, (train_indices, val_indices, test_indices) = load_data(dataset_name, small_trainingset=1, pretransform=None)
         logging.info("Graph loaded!\n")
         disk_loading_time = time.time() - start_time
 

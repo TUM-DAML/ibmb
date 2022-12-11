@@ -35,7 +35,7 @@ def run(model_path='',
         num_layers=3,
         device='cuda'):
     start_time = time.time()
-    graph, (train_indices, val_indices, test_indices) = load_data('papers100M', 1)
+    graph, (train_indices, val_indices, test_indices) = load_data('papers100M', 1, None)
     logging.info("Graph loaded!\n")
     disk_loading_time = time.time() - start_time
 
@@ -77,10 +77,8 @@ def run(model_path='',
                         adj[j] = adj[j][mask[s:e], :]
                         if adj[j].nnz() == 0:
                             adj[j] = None
-                x = chunked_matmul_beta(l.weight, x, num_chunks)
+                x = general_chunk_forward_beta(l.lin, x, num_chunks)
                 x = chunked_sp_matmul_beta(adj, x, num_chunks, reduce=l.aggr, device=l.weight.device)
-                if l.bias is not None:
-                    x = chunk_add_beta(x, l.bias, num_chunks)
             elif isinstance(l, (torch.nn.Linear, torch.nn.LayerNorm)):
                 x = general_chunk_forward_beta(l, x, num_chunks)
             else:  # relu, dropout
