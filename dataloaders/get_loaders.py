@@ -292,7 +292,7 @@ def get_loaders(graph: Data,
         raise NotImplementedError
 
     if ibmb_val:
-        if mode != 'ppr':
+        if mode != 'ppr' and ppr_params is not None:
             ppr_val_loader = IBMBNodeLoader(graph,
                                             val_indices,
                                             EDGE_INDEX_TYPE,
@@ -314,7 +314,7 @@ def get_loaders(graph: Data,
                                                  alpha=ppr_params['alpha'],
                                                  eps=ppr_params['eps'],
                                                  batch_size=batch_size)
-        if mode != 'part':
+        if mode != 'part' and batch_params is not None:
             batch_val_loader = IBMBBatchLoader(graph,
                                                batch_params['num_batches'][1],
                                                val_indices,
