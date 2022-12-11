@@ -9,7 +9,7 @@ from torch_geometric.utils import to_undirected, add_remaining_self_loops
 def check_consistence(mode: str, batch_order: str):
     assert mode in ['ppr', 'rand', 'randfix', 'part', 'ready',
                     'clustergcn', 'n_sampling', 'rw_sampling', 'ladies', 'ppr_shadow']
-    if mode in ['ppr', 'part', 'randfix',]:
+    if mode in ['ppr', 'part', 'randfix', 'ready']:
         assert batch_order in ['rand', 'sample', 'order']
     else:
         assert batch_order == 'rand'
