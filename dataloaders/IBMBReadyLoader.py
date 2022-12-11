@@ -31,13 +31,10 @@ class IBMBReadyLoader(BaseLoader):
             adj = self.normalize_adjmat(adj, normalization='rw')
         adj = adj
 
-        assert is_undirected(graph.edge_index, num_nodes=graph.num_nodes), "Assume the graph to be undirected"
         self.cache_data = kwargs['batch_size'] == 1
         self.batch_size = kwargs['batch_size']
         assert return_edge_index_type in ['adj', 'edge_index']
         self.return_edge_index_type = return_edge_index_type
-
-        self.create_batch_wise_loader(graph)
 
         if self.cache_data:
             self.prepare_cache(graph, batches, adj)
