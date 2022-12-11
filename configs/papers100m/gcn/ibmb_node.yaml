@@ -1,16 +1,6 @@
-    inference: True
-    LBMB_val: True
-    mode: 'ready'
-    ppr_params:
-        neighbor_topk: 96
-        merge_max_size: null
-        primes_per_batch: 5000
-        alpha: 0.05
-        eps: 2.e-5
-    batch_params:
-        num_batches: [256, 32, 48]
-        part_topk: [1, 1]
-        alpha: 0.05
-    micro_batch: 1
-    batch_size: 1
-    batch_order: 'order'
+inference: True
+LBMB_val: True
+mode: 'ppr'
+micro_batch: 1
+batch_size: 1
+batch_order: 'order'
