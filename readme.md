@@ -46,13 +46,17 @@ pip install python-tsp
 pip install psutil
 ```
 
-## Replicate experiments
+## Run experiments
+
+We provide a couple of demo configs to play with.
 
 To replicate Table 7 and Figure 3, run with the yaml files under `configs/main_exps/`, e.g.
 
-`python run_ogbn.py with configs/main_exps/gcn/arxiv/ppr_based.yaml`
+`python run_ogbn.py with configs/main_exps/gcn/arxiv/ibmb_node.yaml`
 
-To replicate Figure 2, run with the yaml files under `configs/infer` and `configs/full_infer`. We recommend using [seml](https://github.com/TUM-DAML/seml) to tune the hyperparameters in large scale. 
+To replicate Figure 2, run with the yaml files under `configs/infer`. You have to provide grid search parameters yourself. We recommend using [seml](https://github.com/TUM-DAML/seml) to tune the hyperparameters in large scale. e.g.
+
+`python infer.py with configs/infer/gcn/arxiv/ibmb_node.yaml`
 
 See the paper's appendix for more information about tuning hyperparameters of IBMB and the baselines. 
 
