@@ -6,6 +6,7 @@ from ogb.nodeproppred import PygNodePropPredDataset
 from scipy.sparse import csr_matrix, eye
 from torch_geometric.data import Data
 from torch_geometric.datasets import Reddit, Reddit2
+from torch_geometric.utils import to_undirected, add_remaining_self_loops
 from torch_sparse import SparseTensor
 
 from neighboring.pernode_ppr_neighbor import topk_ppr_matrix
@@ -13,26 +14,13 @@ from . import normalize_adjmat
 from .const import get_ppr_default
 
 
-def check_consistence(mode: str,
-                      neighbor_sampling: str,
-                      order: bool,
-                      sample: bool):
-    assert mode in ['ppr', 'rand', 'randfix', 'part', 'clustergcn', 'n_sampling', 'rw_sampling', 'ladies', 'part+ppr',
-                    'ppr_shadow']
-    if mode in ['ppr', 'part', 'randfix', 'part+ppr']:
-        assert not (sample and order)
+def check_consistence(mode: str, batch_order: str):
+    assert mode in ['ppr', 'rand', 'randfix', 'part',
+                    'clustergcn', 'n_sampling', 'rw_sampling', 'ladies', 'ppr_shadow']
+    if mode in ['ppr', 'part', 'randfix',]:
+        assert batch_order in ['rand', 'sample', 'order']
     else:
-        assert not (sample or order)
-
-    if mode in ['ppr', 'rand', 'part+ppr']:
-        assert neighbor_sampling in ['ppr', 'hk', 'pnorm']
-    elif mode == 'part':
-        assert neighbor_sampling in ['ladies', 'batch_hk', 'batch_ppr', ]
-    elif mode == 'clustergcn':
-        assert not (sample or order)
-
-    if neighbor_sampling == 'ladies':
-        assert mode == 'part'
+        assert batch_order == 'rand'
 
 
 def config_transform(dataset_name: str,
@@ -75,22 +63,26 @@ def config_transform(dataset_name: str,
 
 
 def load_data(dataset_name: str,
-              small_trainingset: float):
+              small_trainingset: float,
+              pretransform):
     """
 
     :param dataset_name:
     :param small_trainingset:
+    :param pretransform:
     :return:
     """
     if dataset_name.lower() in ['arxiv', 'products', 'papers100m']:
-        dataset = PygNodePropPredDataset(name="ogbn-{:s}".format(dataset_name), root='./datasets')
+        dataset = PygNodePropPredDataset(name="ogbn-{:s}".format(dataset_name),
+                                         root='./datasets',
+                                         pre_transform=pretransform)
         split_idx = dataset.get_idx_split()
         graph = dataset[0]
     elif dataset_name.lower().startswith('reddit'):
         if dataset_name == 'reddit2':
-            dataset = Reddit2('./datasets/reddit2')
+            dataset = Reddit2('./datasets/reddit2', pre_transform=pretransform)
         elif dataset_name == 'reddit':
-            dataset = Reddit('./datasets/reddit')
+            dataset = Reddit('./datasets/reddit', pre_transform=pretransform)
         else:
             raise ValueError
         graph = dataset[0]
@@ -101,7 +93,7 @@ def load_data(dataset_name: str,
     else:
         raise NotImplementedError
 
-    train_indices = split_idx["train"].cpu().detach().numpy()
+    train_indices = split_idx["train"].numpy()
 
     if small_trainingset < 1:
         np.random.seed(2021)
@@ -110,41 +102,34 @@ def load_data(dataset_name: str,
                                                  replace=False,
                                                  p=None))
 
-    val_indices = split_idx["valid"].cpu().detach().numpy()
-    test_indices = split_idx["test"].cpu().detach().numpy()
+    train_indices = torch.from_numpy(train_indices)
+
+    val_indices = split_idx["valid"]
+    test_indices = split_idx["test"]
     return graph, (train_indices, val_indices, test_indices,)
 
 
-# Todo: use pre-transform
 class GraphPreprocess:
     def __init__(self,
                  self_loop: bool = True,
-                 to_undirected: bool = True,
-                 normalization: str = 'sym'):
+                 transform_to_undirected: bool = True):
         self.self_loop = self_loop
-        self.to_undirected = to_undirected
-        self.normalization = normalization
+        self.to_undirected = transform_to_undirected
 
     def __call__(self, graph: Data):
         graph.y = graph.y.reshape(-1)
         graph.y = torch.nan_to_num(graph.y, nan=-1)
         graph.y = graph.y.to(torch.long)
 
-        # add adj_t
-        row, col = graph.edge_index.cpu().detach().numpy()
-        graph.edge_index = None
-        data = np.ones_like(row, dtype=np.bool_)
-        adj = csr_matrix((data, (row, col)), shape=(graph.num_nodes, graph.num_nodes))
+        if self.self_loop:
+            edge_index, _ = add_remaining_self_loops(graph.edge_index, num_nodes=graph.num_nodes)
+        else:
+            edge_index = graph.edge_index
 
         if self.to_undirected:
-            adj += adj.transpose()
+            edge_index = to_undirected(edge_index, num_nodes=graph.num_nodes)
 
-        if self.self_loop:
-            adj += eye(graph.num_nodes, dtype=np.bool_)
-
-        adj = normalize_adjmat(adj, self.normalization, inplace=True)
-        graph.adj_t = SparseTensor.from_scipy(adj)
-
+        graph.edge_index = edge_index
         return graph
 
 

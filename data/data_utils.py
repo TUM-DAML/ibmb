@@ -86,3 +86,23 @@ def get_pair_wise_distance(ys: list, num_classes: int, dist_type: str = 'kl'):
     np.fill_diagonal(pairwise_dist, 0.)
 
     return pairwise_dist
+
+
+class MyGraph:
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.keys = kwargs.keys()
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def to(self, device, non_blocking=False):
+        for k in self.keys:
+            v = getattr(self, k)
+            if isinstance(v, (torch.Tensor, SparseTensor)):
+                setattr(self, k, v.to(device, non_blocking=non_blocking))
+            if isinstance(v, list):
+                if isinstance(v[0], (torch.Tensor, SparseTensor)):
+                    setattr(self, k, [_v.to(device,non_blocking=non_blocking) for _v in v])
+                else:
+                    raise TypeError
+        return self
