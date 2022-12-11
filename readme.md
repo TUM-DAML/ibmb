@@ -14,30 +14,26 @@ Published at LoG 2022 (oral)
 
 ## Environment setup
 
-The experiments in the paper were run on an Nvidia GTX1080Ti. Note that newer GPUs might not support this version of CUDA.
+The experiments in the paper were run on an Nvidia GTX1080Ti. If you have other GPUs, please check your GPU and cuda compatibility. 
 
-We set up an Anaconda environment with Python 3.7
+We set up an Anaconda environment with Python 3.8
 
 ```angular2html
-conda create -n ibmb python=3.7
+conda create -n ibmb python=3.8
 conda activate ibmb
 ```
 
-We use pytorch 1.8.1 with cudatoolkit 10.2
+We use pytorch 1.10.1 with cudatoolkit 11.3
 
-`conda install pytorch==1.8.1 cudatoolkit=10.2 -c pytorch`
+`conda install pytorch==1.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge`
 
-Install PyG 1.7.0
+Install PyG 2.0.3. Feel free to use other versions, just be careful of some updates in classes and keywords.
 
 ```
-pip install https://data.pyg.org/whl/torch-1.8.0%2Bcu102/torch_cluster-1.5.9-cp37-cp37m-linux_x86_64.whl
-pip install https://data.pyg.org/whl/torch-1.8.0%2Bcu102/torch_scatter-2.0.6-cp37-cp37m-linux_x86_64.whl
-pip install https://data.pyg.org/whl/torch-1.8.0%2Bcu102/torch_sparse-0.6.12-cp37-cp37m-linux_x86_64.whl  # please do not use older versions!
-pip install https://data.pyg.org/whl/torch-1.8.0%2Bcu102/torch_spline_conv-1.2.1-cp37-cp37m-linux_x86_64.whl
-pip install torch-geometric==1.7.0
+pip install https://data.pyg.org/whl/torch-1.10.0%2Bcu113/torch_scatter-2.0.9-cp38-cp38-linux_x86_64.whl
+pip install https://data.pyg.org/whl/torch-1.10.0%2Bcu113/torch_sparse-0.6.13-cp38-cp38-linux_x86_64.whl  # please do not use older versions < 0.6.12
+pip install torch-geometric==2.0.3
 ```
-
-Feel free to use other versions of PyG, but please be aware that some class keywords might be different. 
 
 Other packages
 
