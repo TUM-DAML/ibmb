@@ -2,14 +2,18 @@ import logging
 import os
 import time
 from collections import defaultdict
+from math import ceil
 
 import numpy as np
 import torch
 from sklearn.metrics import f1_score
-from tqdm import tqdm
+from torch_sparse import SparseTensor
 
-from .prefetch_generators import get_prefetch_generator
-from .train_utils import run_batch, MyGraph
+from new_loaders.BaseLoader import BaseLoader
+from .prefetch_generators import BackgroundGenerator
+from .train_utils import run_batch
+from data.data_utils import MyGraph
+
 
 # from torch.utils.tensorboard import SummaryWriter
 
@@ -17,22 +21,18 @@ from .train_utils import run_batch, MyGraph
 class Trainer:
     def __init__(self,
                  mode: str,
-                 neighbor_sampling: str,
-                 num_batches: list,
+                 num_batches: int,
                  micro_batch: int = 1,
                  batch_size: int = 1,
                  epoch_max: int = 800,
                  epoch_min: int = 300,
                  patience: int = 100,
-                 device: str = 'cuda',
-                 notebook: bool = True):
+                 device: str = 'cuda', ):
 
         super().__init__()
 
         self.mode = mode
-        self.neighbor_sampling = neighbor_sampling
         self.device = device
-        self.notebook = notebook
         self.num_batches = num_batches
         self.batch_size = batch_size
         self.micro_batch = micro_batch
@@ -44,17 +44,18 @@ class Trainer:
 
     def get_loss_scaling(self, len_loader: int):
         micro_batch = int(min(self.micro_batch, len_loader))
-        num_batches = len_loader // self.batch_size + ((len_loader % self.batch_size) > 0)
+        num_batches = ceil(len_loader / self.batch_size)
         loss_scaling_lst = [micro_batch] * (num_batches // micro_batch) + [num_batches % micro_batch]
         return loss_scaling_lst, micro_batch
 
     def train(self,
-              dataset,
+              train_loader,
+              self_val_loader,
+              ppr_val_loader,
+              batch_val_loader,
               model,
               lr,
               reg,
-              train_nodes=None,
-              val_nodes=None,
               comment='',
               run_no=''):
 
@@ -62,9 +63,6 @@ class Trainer:
         patience_count = 0
         best_accs = {'train': 0., 'self': 0., 'part': 0., 'ppr': 0.}
         best_val_acc = -1.
-
-        pbar = tqdm(range(self.epoch_max)) if self.notebook else range(self.epoch_max)
-        np.random.seed(2021)
 
         if not os.path.isdir('./saved_models'):
             os.mkdir('./saved_models')
@@ -80,13 +78,9 @@ class Trainer:
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode='min', factor=0.33, patience=30,
                                                                cooldown=10, min_lr=1e-4)
 
-        dataset.set_split('train')
-        next_loader = get_prefetch_generator(self.mode,
-                                             self.neighbor_sampling,
-                                             dataset,
-                                             train_nodes,
-                                             self.batch_size)
-        for epoch in pbar:
+        next_loader = BackgroundGenerator(train_loader)
+        for epoch in range(self.epoch_max):
+            logging.info(f"Epoch {epoch}")
             data_dic = {'self': {'loss': 0., 'acc': 0., 'num': 0},
                         'part': {'loss': 0., 'acc': 0., 'num': 0},
                         'train': {'loss': 0., 'acc': 0., 'num': 0},
@@ -96,7 +90,7 @@ class Trainer:
 
             # train
             model.train()
-            loss_scaling_lst, cur_micro_batch = self.get_loss_scaling(len(dataset.train_loader))
+            loss_scaling_lst, cur_micro_batch = self.get_loss_scaling(len(train_loader))
             loader, next_loader = next_loader, None
 
             start_time = time.time()
@@ -109,31 +103,14 @@ class Trainer:
                     break
                 else:
                     if data[1]:  # stop signal
-                        successful_part = dataset.set_split('val_part')
-                        if successful_part:
-                            next_loader = get_prefetch_generator(self.mode,
-                                                                 self.neighbor_sampling,
-                                                                 dataset,
-                                                                 val_nodes,
-                                                                 batch_size=self.batch_size)
+                        if batch_val_loader is not None:
+                            next_loader = BackgroundGenerator(batch_val_loader)
+                        elif ppr_val_loader is not None:
+                            next_loader = BackgroundGenerator(ppr_val_loader)
                         else:
-                            successful_ppr = dataset.set_split('val_ppr')
-                            if successful_ppr:
-                                next_loader = get_prefetch_generator(self.mode,
-                                                                     self.neighbor_sampling,
-                                                                     dataset,
-                                                                     val_nodes,
-                                                                     batch_size=self.batch_size)
-                            else:
-                                dataset.set_split('val_self')
-                                next_loader = get_prefetch_generator(self.mode,
-                                                                     self.neighbor_sampling,
-                                                                     dataset,
-                                                                     val_nodes,
-                                                                     batch_size=self.batch_size)
+                            next_loader = BackgroundGenerator(self_val_loader)
 
-                loss, corrects, num_nodes, _, _ = run_batch(model, MyGraph(*data[0]), loss_scaling_lst[0],
-                                                            verbose=False)
+                loss, corrects, num_nodes, _, _ = run_batch(model, data[0], loss_scaling_lst[0])
                 data_dic['train']['loss'] += loss
                 data_dic['train']['acc'] += corrects
                 data_dic['train']['num'] += num_nodes
@@ -152,15 +129,16 @@ class Trainer:
 
             train_time = time.time() - start_time
 
-            logging.info(f'\n allocated: {torch.cuda.memory_allocated()}')
-            logging.info(f'max allocated: {torch.cuda.max_memory_allocated()}')
-            logging.info(f'reserved: {torch.cuda.memory_reserved()}')
+            logging.info('After train loader -- '
+                         f'Allocated: {torch.cuda.memory_allocated()}, '
+                         f'Max allocated: {torch.cuda.max_memory_allocated()}, '
+                         f'Reserved: {torch.cuda.memory_reserved()}')
 
             model.eval()
 
             # part val first, for fairness of all methods
             start_time = time.time()
-            if successful_part:
+            if batch_val_loader is not None:
                 loader, next_loader = next_loader, None
 
                 while True:
@@ -172,23 +150,13 @@ class Trainer:
                         break
                     else:
                         if data[1]:  # stop signal
-                            successful_ppr = dataset.set_split('val_ppr')
-                            if successful_ppr:
-                                next_loader = get_prefetch_generator(self.mode,
-                                                                     self.neighbor_sampling,
-                                                                     dataset,
-                                                                     val_nodes,
-                                                                     batch_size=self.batch_size)
+                            if ppr_val_loader is not None:
+                                next_loader = BackgroundGenerator(ppr_val_loader)
                             else:
-                                dataset.set_split('val_self')
-                                next_loader = get_prefetch_generator(self.mode,
-                                                                     self.neighbor_sampling,
-                                                                     dataset,
-                                                                     val_nodes,
-                                                                     batch_size=self.batch_size)
+                                next_loader = BackgroundGenerator(self_val_loader)
 
                     with torch.no_grad():
-                        loss, corrects, num_nodes, _, _ = run_batch(model, MyGraph(*data[0]), verbose=False)
+                        loss, corrects, num_nodes, _, _ = run_batch(model, data[0])
                         data_dic['part']['loss'] += loss
                         data_dic['part']['acc'] += corrects
                         data_dic['part']['num'] += num_nodes
@@ -197,7 +165,7 @@ class Trainer:
 
             # ppr val
             start_time = time.time()
-            if successful_ppr:
+            if ppr_val_loader is not None:
                 loader, next_loader = next_loader, None
 
                 while True:
@@ -209,15 +177,10 @@ class Trainer:
                         break
                     else:
                         if data[1]:  # stop signal
-                            dataset.set_split('val_self')
-                            next_loader = get_prefetch_generator(self.mode,
-                                                                 self.neighbor_sampling,
-                                                                 dataset,
-                                                                 val_nodes,
-                                                                 batch_size=self.batch_size)
+                            next_loader = BackgroundGenerator(self_val_loader)
 
                     with torch.no_grad():
-                        loss, corrects, num_nodes, _, _ = run_batch(model, MyGraph(*data[0]), verbose=False)
+                        loss, corrects, num_nodes, _, _ = run_batch(model, data[0])
                         data_dic['ppr']['loss'] += loss
                         data_dic['ppr']['acc'] += corrects
                         data_dic['ppr']['num'] += num_nodes
@@ -238,17 +201,12 @@ class Trainer:
                 else:
                     if data[1]:  # stop signal
                         if epoch < self.epoch_max - 1:
-                            dataset.set_split('train')
-                            next_loader = get_prefetch_generator(self.mode,
-                                                                 self.neighbor_sampling,
-                                                                 dataset,
-                                                                 train_nodes,
-                                                                 self.batch_size)
+                            next_loader = BackgroundGenerator(train_loader)
                         else:
                             next_loader = None
 
                 with torch.no_grad():
-                    loss, corrects, num_nodes, _, _ = run_batch(model, MyGraph(*data[0]), verbose=False)
+                    loss, corrects, num_nodes, _, _ = run_batch(model, data[0])
                     data_dic['self']['loss'] += loss
                     data_dic['self']['acc'] += corrects
                     data_dic['self']['num'] += num_nodes
@@ -282,24 +240,18 @@ class Trainer:
 
                     if next_loader is not None:
                         next_loader.stop_signal = True
-                        while next_loader.isAlive():
+                        while next_loader.is_alive():
                             batch = next_loader.next()
                         next_loader = None
                     torch.cuda.empty_cache()
                     break
 
-            # set tqdm
-            if self.notebook:
-                pbar.set_postfix(train_loss='{:.3f}'.format(data_dic['train']['loss']),
-                                 self_val_loss='{:.3f}'.format(data_dic['self']['loss']),
-                                 part_val_loss='{:.3f}'.format(data_dic['part']['loss']),
-                                 ppr_val_loss='{:.3f}'.format(data_dic['ppr']['loss']),
-                                 train_acc='{:.3f}'.format(data_dic['train']['acc']),
-                                 self_val_acc='{:.3f}'.format(data_dic['self']['acc']),
-                                 part_val_acc='{:.3f}'.format(data_dic['part']['acc']),
-                                 ppr_val_acc='{:.3f}'.format(data_dic['ppr']['acc']),
-                                 lr='{:.5f}'.format(opt.param_groups[0]['lr']),
-                                 patience='{:d} / {:d}'.format(patience_count, self.patience))
+            logging.info(f"train_acc: {data_dic['train']['acc']:.5f}, "
+                         f"self_val_acc: {data_dic['self']['acc']:.5f}, "
+                         f"part_val_acc: {data_dic['part']['acc']:.5f}, "
+                         f"ppr_val_acc: {data_dic['ppr']['acc']:.5f}, "
+                         f"lr: {opt.param_groups[0]['lr']}, "
+                         f"patience: {patience_count} / {self.patience}\n")
 
             # maintain curves
             training_curve['per_train_time'].append(train_time)
@@ -347,26 +299,14 @@ class Trainer:
 
     @torch.no_grad()
     def inference(self,
-                  dataset,
+                  self_val_loader,
+                  ppr_val_loader,
+                  batch_val_loader,
+                  self_test_loader,
+                  ppr_test_loader,
+                  batch_test_loader,
                   model,
-                  val_nodes=None,
-                  test_nodes=None,
-                  adj=None,
-                  x=None,
-                  y=None,
-                  file_dir='./saved_models',
-                  comment='',
-                  run_no='',
-                  full_infer=True,
-                  clear_cache=False,
                   record_numbatch=False):
-
-        model_dir = os.path.join(file_dir, comment)
-        assert os.path.isdir(model_dir)
-        model_path = os.path.join(model_dir, f'model_{run_no}.pt')
-
-        model.load_state_dict(torch.load(model_path))
-        model.eval()
 
         cat_dict = {('self', 'val',): [self.database['self_val_accs'], self.database['self_val_f1s']],
                     ('part', 'val',): [self.database['part_val_accs'], self.database['part_val_f1s']],
@@ -375,30 +315,12 @@ class Trainer:
                     ('part', 'test',): [self.database['part_test_accs'], self.database['part_test_f1s']],
                     ('ppr', 'test',): [self.database['ppr_test_accs'], self.database['ppr_test_f1s']], }
 
-        data_dict = {'val': val_nodes, 'test': test_nodes}
+        loader_dict = {'val': {'self': self_val_loader, 'part': batch_val_loader, 'ppr': ppr_val_loader},
+                       'test': {'self': self_test_loader, 'part': batch_test_loader, 'ppr': ppr_test_loader}}
 
         time_dict = {'self': self.database['self_inference_time'],
                      'part': self.database['part_inference_time'],
                      'ppr': self.database['ppr_inference_time']}
-
-        # redundant run to warm up
-        #         for cat in ['val', 'test']:
-        #             for sample in ['self', 'LBMB']:
-        #                 success_ful = dataset.set_split(cat + '_' + sample)
-        #                 if success_ful:
-        #                     loader = get_prefetch_generator(self.mode,
-        #                                                     self.neighbor_sampling,
-        #                                                     dataset,
-        #                                                     test_nodes,
-        #                                                     batch_size=self.batch_size)
-
-        #                     while True:
-        #                         data = loader.next()
-        #                         if data is None:
-        #                             del loader
-        #                             break
-
-        #                         _, _, _, pred_label_batch, true_label_batch = run_batch(model, MyGraph(*data[0]), verbose=True)
 
         for cat in ['val', 'test']:
             for sample in ['self', 'part', 'ppr']:
@@ -406,13 +328,8 @@ class Trainer:
                 num_batch = 0
                 torch.cuda.synchronize()
                 start_time = time.time()
-                success_ful = dataset.set_split(cat + '_' + sample)
-                if success_ful:
-                    loader = get_prefetch_generator(self.mode,
-                                                    self.neighbor_sampling,
-                                                    dataset,
-                                                    test_nodes,
-                                                    batch_size=self.batch_size)
+                if loader_dict[cat][sample] is not None:
+                    loader = BackgroundGenerator(loader_dict[cat][sample])
 
                     pred_labels = []
                     true_labels = []
@@ -423,15 +340,13 @@ class Trainer:
                             del loader
                             break
 
-                        _, _, _, pred_label_batch, true_label_batch = run_batch(model, MyGraph(*data[0]), verbose=True)
-                        pred_labels.append(pred_label_batch)
-                        true_labels.append(true_label_batch)
+                        _, _, _, pred_label_batch, true_label_batch = run_batch(model, data[0])
+                        pred_labels.append(pred_label_batch.detach())
+                        true_labels.append(true_label_batch.detach())
                         num_batch += 1
 
-                    #                         print(cat, torch.cuda.max_memory_allocated())
-
-                    pred_labels = np.concatenate(pred_labels, axis=0)
-                    true_labels = np.concatenate(true_labels, axis=0)
+                    pred_labels = torch.cat(pred_labels, dim=0).cpu().numpy()
+                    true_labels = torch.cat(true_labels, dim=0).cpu().numpy()
 
                     acc = (pred_labels == true_labels).sum() / len(true_labels)
                     f1 = f1_score(true_labels, pred_labels, average='macro', zero_division=0)
@@ -447,33 +362,42 @@ class Trainer:
                     torch.cuda.synchronize()
                     time_dict[sample].append(time.time() - start_time)
 
-                if clear_cache:
-                    dataset.clear_cur_cache()
+    def full_graph_inference(self,
+                             model,
+                             graph,
+                             val_nodes,
+                             test_nodes, ):
 
-        # chunked full-batch inference
-        if full_infer:
-            start_time = time.time()
+        if isinstance(val_nodes, torch.Tensor):
+            val_nodes = val_nodes.numpy()
+        if isinstance(test_nodes, torch.Tensor):
+            test_nodes = test_nodes.numpy()
 
-            mask = np.union1d(val_nodes, test_nodes)
-            val_mask = np.in1d(mask, val_nodes)
-            test_mask = np.in1d(mask, test_nodes)
-            assert np.all(np.invert(val_mask) == test_mask)
-            #             num_chunks = max(len(dataset.train_loader), len(dataset.val_loader[0]), len(dataset.test_loader[0]))
-            outputs = model.chunked_pass(MyGraph(x=x, adj=adj, idx=torch.from_numpy(mask)),
-                                         self.num_batches[0] // self.batch_size).numpy()
+        start_time = time.time()
 
-            for cat in ['val', 'test']:
-                nodes = val_nodes if cat == 'val' else test_nodes
-                _mask = val_mask if cat == 'val' else test_mask
-                pred = np.argmax(outputs[_mask], axis=1)
-                true = y.detach().numpy()[nodes]
+        mask = np.union1d(val_nodes, test_nodes)
+        val_mask = np.in1d(mask, val_nodes)
+        test_mask = np.in1d(mask, test_nodes)
+        assert np.all(np.invert(val_mask) == test_mask)
 
-                acc = (pred == true).sum() / len(true)
-                f1 = f1_score(true, pred, average='macro', zero_division=0)
+        adj = SparseTensor.from_edge_index(graph.edge_index, sparse_sizes=(graph.num_nodes, graph.num_nodes))
+        adj = BaseLoader.normalize_adjmat(adj, normalization='sym')
 
-                self.database[f'full_{cat}_accs'].append(acc)
-                self.database[f'full_{cat}_f1s'].append(f1)
+        outputs = model.chunked_pass(MyGraph(x=graph.x, adj=adj, idx=torch.from_numpy(mask)),
+                                     self.num_batches // self.batch_size).detach().numpy()
 
-                logging.info("full_{}_acc: {:.3f}, full_{}_f1: {:.3f}, ".format(cat, acc, cat, f1))
+        for cat in ['val', 'test']:
+            nodes = val_nodes if cat == 'val' else test_nodes
+            _mask = val_mask if cat == 'val' else test_mask
+            pred = np.argmax(outputs[_mask], axis=1)
+            true = graph.y.numpy()[nodes]
 
-            self.database['full_inference_time'].append(time.time() - start_time)
+            acc = (pred == true).sum() / len(true)
+            f1 = f1_score(true, pred, average='macro', zero_division=0)
+
+            self.database[f'full_{cat}_accs'].append(acc)
+            self.database[f'full_{cat}_f1s'].append(f1)
+
+            logging.info("full_{}_acc: {:.3f}, full_{}_f1: {:.3f}, ".format(cat, acc, cat, f1))
+
+        self.database['full_inference_time'].append(time.time() - start_time)
