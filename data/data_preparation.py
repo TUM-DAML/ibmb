@@ -1,13 +1,9 @@
 import numpy as np
 import torch
 from ogb.nodeproppred import PygNodePropPredDataset
-from scipy.sparse import csr_matrix, eye
 from torch_geometric.data import Data
 from torch_geometric.datasets import Reddit, Reddit2
 from torch_geometric.utils import to_undirected, add_remaining_self_loops
-from torch_sparse import SparseTensor
-
-from dataloaders.BaseLoader import BaseLoader
 
 
 def check_consistence(mode: str, batch_order: str):
@@ -88,38 +84,3 @@ class GraphPreprocess:
 
         graph.edge_index = edge_index
         return graph
-
-
-def graph_preprocess(graph: Data,
-                     self_loop: bool = True,
-                     to_undirected: bool = True,
-                     normalization: str = 'sym'):
-    """
-
-    :param graph:
-    :param self_loop:
-    :param to_undirected:
-    :param normalization:
-    :return:
-    """
-    if graph.y.dim() > 1:
-        graph.y = graph.y.reshape(-1)
-    if torch.isnan(graph.y).any():
-        graph.y = torch.nan_to_num(graph.y, nan=-1)
-    if graph.y.dtype != torch.int64:
-        graph.y = graph.y.to(torch.long)
-
-    row, col = graph.edge_index.cpu().detach().numpy()
-    graph.edge_index = None
-    data = np.ones_like(row, dtype=np.bool_)
-    adj = csr_matrix((data, (row, col)), shape=(graph.num_nodes, graph.num_nodes))
-
-    if to_undirected:
-        adj += adj.transpose()
-
-    if self_loop:
-        adj += eye(graph.num_nodes, dtype=np.bool_)
-
-    adj = SparseTensor.from_scipy(adj)
-    adj = BaseLoader.normalize_adjmat(adj, normalization)
-    graph.adj_t = adj
