@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.getcwd())
 import logging
 import pickle
 import resource
@@ -117,20 +120,28 @@ def run(mode,
                 with open('./papers100m_val_part_batches.pkl', 'rb') as handle:
                     val_batches = pickle.load(handle)
                     batch_val_batches = None
+                with open('./papers100m_val_ppr_batches.pkl', 'rb') as handle:
+                    ppr_val_batches = pickle.load(handle)
                 if inference:
                     with open('./papers100m_test_part_batches.pkl', 'rb') as handle:
                         test_batches = pickle.load(handle)
                         batch_test_batches = None
+                    with open('./papers100m_test_ppr_batches.pkl', 'rb') as handle:
+                        ppr_test_batches = pickle.load(handle)
             elif mode == 'ppr':
                 with open('./papers100m_train_ppr_batches.pkl', 'rb') as handle:
                     train_batches = pickle.load(handle)
                 with open('./papers100m_val_ppr_batches.pkl', 'rb') as handle:
                     val_batches = pickle.load(handle)
                     ppr_val_batches = None
+                with open('./papers100m_val_part_batches.pkl', 'rb') as handle:
+                    batch_val_batches = pickle.load(handle)
                 if inference:
                     with open('./papers100m_test_ppr_batches.pkl', 'rb') as handle:
                         test_batches = pickle.load(handle)
                         ppr_test_batches = None
+                    with open('./papers100m_test_part_batches.pkl', 'rb') as handle:
+                        batch_test_batches = pickle.load(handle)
             else:
                 raise ValueError
 
