@@ -1,5 +1,3 @@
-from typing import Tuple, List, Optional, Dict
-
 import numpy as np
 import torch
 from ogb.nodeproppred import PygNodePropPredDataset
@@ -9,9 +7,7 @@ from torch_geometric.datasets import Reddit, Reddit2
 from torch_geometric.utils import to_undirected, add_remaining_self_loops
 from torch_sparse import SparseTensor
 
-from neighboring.pernode_ppr_neighbor import topk_ppr_matrix
-from . import normalize_adjmat
-from .const import get_ppr_default
+from dataloaders.BaseLoader import BaseLoader
 
 
 def check_consistence(mode: str, batch_order: str):
@@ -124,43 +120,6 @@ def graph_preprocess(graph: Data,
     if self_loop:
         adj += eye(graph.num_nodes, dtype=np.bool_)
 
-    adj = normalize_adjmat(adj, normalization, inplace=True)
-    graph.adj_t = SparseTensor.from_scipy(adj)
-
-
-def get_partitions(mode: str,
-                   mat: SparseTensor,
-                   indices: np.ndarray,
-                   num_parts: int,
-                   force: bool = False) -> list:
-    partitions = None
-    if mode in ['part', 'clustergcn', 'part+ppr'] or force:
-        if mode == 'part+ppr':
-            node_weight = torch.ones(mat.sizes()[0])
-            node_weight[indices] = 100000
-        else:
-            node_weight = None
-        _, partptr, perm = mat.partition(num_parts=num_parts, recursive=False, weighted=False, node_weight=node_weight)
-
-        partitions = []
-        for i in range(len(partptr) - 1):
-            partitions.append(perm[partptr[i]: partptr[i + 1]].cpu().detach().numpy())
-
-    return partitions
-
-
-def get_ppr_mat(mode: str,
-                neighbor_sampling: str,
-                prime_indices: np.ndarray,
-                scipy_adj: csr_matrix,
-                topk=256,
-                eps=None,
-                alpha=0.05) -> csr_matrix:
-    ppr_mat = None
-    if 'ppr' in [mode, neighbor_sampling]:
-        # if too many prime nodes, we don't need many pairs
-        if eps is None:
-            eps = 1e-4 if (scipy_adj.nnz / len(prime_indices) < 100) else 1e-5
-        ppr_mat = topk_ppr_matrix(scipy_adj, alpha, eps, prime_indices, topk=topk, normalization='sym')
-
-    return ppr_mat
+    adj = SparseTensor.from_scipy(adj)
+    adj = BaseLoader.normalize_adjmat(adj, normalization)
+    graph.adj_t = adj

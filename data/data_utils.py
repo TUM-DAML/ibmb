@@ -2,51 +2,12 @@ import time
 
 import numpy as np
 import torch
-from scipy.sparse import csr_matrix
 from torch_sparse import SparseTensor
 
 
 def get_time():
     torch.cuda.synchronize()
     return time.time()
-
-
-def normalize_adjmat(adj: [SparseTensor, csr_matrix],
-                     normalization: str,
-                     inplace: bool = False):
-
-    assert normalization in ['sym', 'rw']
-
-    if isinstance(adj, SparseTensor):
-        if not inplace:
-            adj = adj.clone()
-        adj = adj.fill_value(1, dtype=torch.float32)
-        degree = adj.sum(0)
-    elif isinstance(adj, csr_matrix):
-        if not inplace:
-            adj = adj.copy()
-        adj.data = np.ones_like(adj.data, dtype=np.float32)
-        degree = adj.sum(0).A1
-
-    degree[degree == 0.] = 1e-12
-    deg_inv = 1 / degree
-
-    if normalization == 'sym':
-        deg_inv_sqrt = deg_inv ** 0.5
-        if isinstance(adj, csr_matrix):
-            adj = adj.multiply(deg_inv_sqrt.reshape(1, -1))
-            adj = adj.multiply(deg_inv_sqrt.reshape(-1, 1))
-        elif isinstance(adj, SparseTensor):
-            adj = adj * deg_inv_sqrt.reshape(1, -1)
-            adj = adj * deg_inv_sqrt.reshape(-1, 1)
-
-    elif normalization == 'rw':
-        if isinstance(adj, csr_matrix):
-            adj = adj.multiply(deg_inv.reshape(-1, 1))
-        elif isinstance(adj, SparseTensor):
-            adj = adj * deg_inv.reshape(-1, 1)
-
-    return adj
 
 
 def kl_divergence(p: np.ndarray, q: np.ndarray):
