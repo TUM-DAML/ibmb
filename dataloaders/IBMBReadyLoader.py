@@ -4,7 +4,6 @@ from typing import Optional, List, Tuple
 import numpy as np
 import torch
 from torch_geometric.data import Data
-from torch_geometric.utils import is_undirected
 from torch_sparse import SparseTensor
 from tqdm import tqdm
 
