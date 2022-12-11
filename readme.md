@@ -44,6 +44,7 @@ pip install seml
 pip install parallel-sort==0.0.3  # please do not use new versions
 pip install python-tsp
 pip install psutil
+pip install numba
 ```
 
 ## Run experiments
