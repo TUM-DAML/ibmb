@@ -23,45 +23,6 @@ def check_consistence(mode: str, batch_order: str):
         assert batch_order == 'rand'
 
 
-def config_transform(dataset_name: str,
-                     graphmodel: str,
-                     len_split: Tuple[int, int, int],
-                     mode: str,
-                     neighbor_sampling: str,
-                     num_nodes: int,
-                     num_batches: List[int],
-                     ppr_params: Optional[Dict],
-                     ladies_params: Optional[Dict]):
-    # need validation
-    if ppr_params is None:
-        ppr_params = get_ppr_default(dataset_name, graphmodel)
-
-    merge_max_size = (num_nodes // num_batches[0] + 1,
-                      num_nodes // num_batches[1] + 1,
-                      num_nodes // num_batches[2] + 1)
-
-    if 'ladies' in [mode, neighbor_sampling]:
-        merge_max_size = ladies_params['sample_size']
-    elif 'ppr' in [mode, neighbor_sampling]:
-        if ppr_params['merge_max_size'] is not None:
-            merge_max_size = ppr_params['merge_max_size']
-
-    # make it evenly distributed for each split
-    n1 = np.ceil(len_split[0] / ppr_params['primes_per_batch']).astype(int)
-    n2 = np.ceil(len_split[1] / ppr_params['primes_per_batch'] / 2).astype(int)
-    n3 = np.ceil(len_split[2] / ppr_params['primes_per_batch'] / 2).astype(int)
-    primes_per_batch = (np.ceil(len_split[0] / n1).astype(int),
-                        np.ceil(len_split[1] / n2).astype(int),
-                        np.ceil(len_split[2] / n3).astype(int),)
-
-    if isinstance(ppr_params['neighbor_topk'], int):
-        neighbor_topk = [ppr_params['neighbor_topk']] * 3
-    else:
-        neighbor_topk = ppr_params['neighbor_topk']
-
-    return merge_max_size, neighbor_topk, primes_per_batch, ppr_params
-
-
 def load_data(dataset_name: str,
               small_trainingset: float,
               pretransform):

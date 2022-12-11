@@ -5,15 +5,15 @@ from typing import Dict, Tuple, Union, Optional
 from torch import LongTensor
 from torch_geometric.data import Data
 
-from new_loaders.ClusterGCNLoader import ClusterGCNLoader
-from new_loaders.GraphSAINTRWSampler import SaintRWTrainSampler, SaintRWValSampler
-from new_loaders.IBMBBatchLoader import IBMBBatchLoader
-from new_loaders.IBMBNodeLoader import IBMBNodeLoader
-from new_loaders.IBMBRandLoader import IBMBRandLoader
-from new_loaders.IBMBRandfixLoader import IBMBRandfixLoader
-from new_loaders.ShaDowLoader import ShaDowLoader
-from new_loaders.LADIESSampler import LADIESSampler
-from new_loaders.NeighborSamplingLoader import NeighborSamplingLoader
+from dataloaders.ClusterGCNLoader import ClusterGCNLoader
+from dataloaders.GraphSAINTRWSampler import SaintRWTrainSampler, SaintRWValSampler
+from dataloaders.IBMBBatchLoader import IBMBBatchLoader
+from dataloaders.IBMBNodeLoader import IBMBNodeLoader
+from dataloaders.IBMBRandLoader import IBMBRandLoader
+from dataloaders.IBMBRandfixLoader import IBMBRandfixLoader
+from dataloaders.ShaDowLoader import ShaDowLoader
+from dataloaders.LADIESSampler import LADIESSampler
+from dataloaders.NeighborSamplingLoader import NeighborSamplingLoader
 
 Loader = Union[IBMBNodeLoader]
 EDGE_INDEX_TYPE = 'adj'

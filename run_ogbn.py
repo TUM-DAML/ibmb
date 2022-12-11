@@ -9,7 +9,7 @@ import seml
 import torch
 from sacred import Experiment
 
-from new_loaders.get_loaders import get_loaders
+from dataloaders.get_loaders import get_loaders
 from data.data_preparation import check_consistence, load_data, GraphPreprocess
 from models.get_model import get_model
 from train.trainer import Trainer

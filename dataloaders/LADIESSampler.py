@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union, List
 from scipy.sparse import csr_matrix
-from new_loaders.BaseLoader import BaseLoader
+from dataloaders.BaseLoader import BaseLoader
 from torch_geometric.data import Data
 import torch
 from torch_geometric.utils import is_undirected

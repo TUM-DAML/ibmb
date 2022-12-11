@@ -1,11 +1,11 @@
 import queue
 import threading
 
-from new_loaders.GraphSAINTRWSampler import SaintRWValSampler
-from new_loaders.IBMBRandLoader import IBMBRandLoader
-from new_loaders.ShaDowLoader import ShaDowLoader
-from new_loaders.LADIESSampler import LADIESSampler
-from new_loaders.NeighborSamplingLoader import NeighborSamplingLoader
+from dataloaders.GraphSAINTRWSampler import SaintRWValSampler
+from dataloaders.IBMBRandLoader import IBMBRandLoader
+from dataloaders.ShaDowLoader import ShaDowLoader
+from dataloaders.LADIESSampler import LADIESSampler
+from dataloaders.NeighborSamplingLoader import NeighborSamplingLoader
 
 
 class BaseGenerator(threading.Thread):

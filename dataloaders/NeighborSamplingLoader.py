@@ -6,7 +6,7 @@ from torch_geometric.data import Data
 from torch_sparse import SparseTensor
 
 from data.data_utils import MyGraph
-from new_loaders.BaseLoader import BaseLoader
+from dataloaders.BaseLoader import BaseLoader
 
 
 # https://pytorch-geometric.readthedocs.io/en/2.0.3/_modules/torch_geometric/loader/neighbor_sampler.html#NeighborSampler
