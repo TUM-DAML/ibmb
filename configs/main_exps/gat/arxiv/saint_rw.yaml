@@ -1,7 +1,7 @@
     dataset_name: 'arxiv'
     inference: True
     LBMB_val: True
-    mode: 'clustergcn'
+    mode: 'rw_sampling'
     ppr_params:
             neighbor_topk: 16
             merge_max_size: null
@@ -9,9 +9,14 @@
             alpha: 0.25
             eps: 2.e-4
     batch_params:
-            num_batches: [ 8, 4, 4 ]
+            num_batches: [8, 4, 4]
             part_topk: [ 1, 1 ]
             alpha: 0.25
+    rw_sampling_params:
+        batch_size: [17500, 10000]
+        num_steps: 4
+        walk_length: 2
+        sample_coverage: 100
     micro_batch: 1
     batch_size: 1
     batch_order: 'rand'

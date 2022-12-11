@@ -1,0 +1,23 @@
+    dataset_name: 'arxiv'
+    inference: True
+    LBMB_val: True
+    mode: 'ppr'
+    ppr_params:
+        neighbor_topk: 16
+        merge_max_size: null
+        primes_per_batch: 9000
+        alpha: 0.25
+        eps: 2.e-4
+    batch_params:
+        num_batches: [4, 2, 2]
+        part_topk: [1, 1]
+        alpha: 0.25
+    micro_batch: 1
+    batch_size: 1
+    batch_order: 'order'
+    small_trainingset: 1
+
+    graphmodel: 'sage'
+    hidden_channels: 256
+    reg: 0.
+    num_layers: 3
