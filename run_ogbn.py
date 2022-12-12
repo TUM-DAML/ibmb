@@ -55,8 +55,8 @@ def run(dataset_name,
         num_layers=3,
         heads=None,
 
-        epoch_min=3,
-        epoch_max=5,
+        epoch_min=300,
+        epoch_max=800,
         patience=100,
         lr=1e-3,
 
