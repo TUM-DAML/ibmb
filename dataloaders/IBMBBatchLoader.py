@@ -3,6 +3,7 @@ from typing import Optional, Union, List, Tuple
 
 import numpy as np
 import torch
+from torch.utils.data import Sampler
 from torch_geometric.data import Data
 from torch_geometric.utils import is_undirected
 from torch_sparse import SparseTensor
@@ -104,6 +105,7 @@ class IBMBBatchLoader(BaseLoader):
     """
 
     def __init__(self, graph: Data,
+                 batch_order: str,
                  num_partitions: int,
                  output_indices: torch.LongTensor,
                  return_edge_index_type: str,
@@ -112,6 +114,7 @@ class IBMBBatchLoader(BaseLoader):
                  num_outnodeset_per_batch: Optional[int] = 50,
                  alpha: float = 0.2,
                  approximate_ppr_iterations: int = 50,
+                 sampler: Sampler = None,
                  **kwargs):
 
         self.subgraphs = []
@@ -135,10 +138,16 @@ class IBMBBatchLoader(BaseLoader):
 
         self.create_batch_wise_loader(graph)
 
+        if len(self.batch_wise_out_aux_pairs) > 2:   # <= 2 order makes no sense
+            ys = [graph.y[out].numpy() for out, _ in self.batch_wise_out_aux_pairs]
+            sampler = self.define_sampler(batch_order,
+                                          ys,
+                                          graph.y.max().item() + 1)
+
         if not self.cache_data:
             self.original_graph = graph  # need to cache the original graph
 
-        super().__init__(self.subgraphs if self.cache_data else self.batch_wise_out_aux_pairs, **kwargs)
+        super().__init__(self.subgraphs if self.cache_data else self.batch_wise_out_aux_pairs, sampler=sampler, **kwargs)
 
     def create_batch_wise_loader(self, graph: Data):
         adj = SparseTensor.from_edge_index(graph.edge_index, sparse_sizes=(graph.num_nodes, graph.num_nodes))

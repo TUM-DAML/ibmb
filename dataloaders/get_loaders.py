@@ -15,7 +15,17 @@ from dataloaders.ShaDowLoader import ShaDowLoader
 from dataloaders.LADIESSampler import LADIESSampler
 from dataloaders.NeighborSamplingLoader import NeighborSamplingLoader
 
-Loader = Union[IBMBNodeLoader]
+Loader = Union[
+    ClusterGCNLoader,
+    SaintRWTrainSampler,
+    SaintRWValSampler,
+    IBMBBatchLoader,
+    IBMBNodeLoader,
+    IBMBRandfixLoader,
+    ShaDowLoader,
+    LADIESSampler,
+    NeighborSamplingLoader
+]
 EDGE_INDEX_TYPE = 'adj'
 
 
@@ -29,6 +39,7 @@ def get_loaders(graph: Data,
                 splits: Tuple[LongTensor, LongTensor, LongTensor],
                 batch_size: int,
                 mode: str,
+                batch_order: str,
                 ppr_params: Optional[Dict],
                 batch_params: Optional[Dict],
                 rw_sampling_params: Optional[Dict],
@@ -57,6 +68,7 @@ def get_loaders(graph: Data,
     batch_test_loader = None
     if mode == 'ppr':
         train_loader = IBMBNodeLoader(graph,
+                                      batch_order,
                                       train_indices,
                                       EDGE_INDEX_TYPE,
                                       ppr_params['neighbor_topk'],
@@ -65,8 +77,10 @@ def get_loaders(graph: Data,
                                       num_auxiliary_nodes_per_batch=None,
                                       alpha=ppr_params['alpha'],
                                       eps=ppr_params['eps'],
-                                      batch_size=batch_size)
+                                      batch_size=batch_size,
+                                      shuffle=False)    # must be false, instead we define our own order!
         self_val_loader = IBMBNodeLoader(graph,
+                                         batch_order,
                                          val_indices,
                                          EDGE_INDEX_TYPE,
                                          ppr_params['neighbor_topk'],
@@ -75,9 +89,11 @@ def get_loaders(graph: Data,
                                          num_auxiliary_nodes_per_batch=None,
                                          alpha=ppr_params['alpha'],
                                          eps=ppr_params['eps'],
-                                         batch_size=batch_size)
+                                         batch_size=batch_size,
+                                         shuffle=False)
         if inference:
             self_test_loader = IBMBNodeLoader(graph,
+                                              batch_order,
                                               test_indices,
                                               EDGE_INDEX_TYPE,
                                               ppr_params['neighbor_topk'],
@@ -86,30 +102,37 @@ def get_loaders(graph: Data,
                                               num_auxiliary_nodes_per_batch=None,
                                               alpha=ppr_params['alpha'],
                                               eps=ppr_params['eps'],
-                                              batch_size=batch_size)
+                                              batch_size=batch_size,
+                                              shuffle=False)
     elif mode == 'part':
         train_loader = IBMBBatchLoader(graph,
+                                       batch_order,
                                        batch_params['num_batches'][0],
                                        train_indices,
                                        EDGE_INDEX_TYPE,
                                        batch_params['part_topk'][0],
                                        alpha=batch_params['alpha'],
-                                       batch_size=batch_size)
+                                       batch_size=batch_size,
+                                       shuffle=False)
         self_val_loader = IBMBBatchLoader(graph,
+                                          batch_order,
                                           batch_params['num_batches'][1],
                                           val_indices,
                                           EDGE_INDEX_TYPE,
                                           batch_params['part_topk'][1],
                                           alpha=batch_params['alpha'],
-                                          batch_size=batch_size)
+                                          batch_size=batch_size,
+                                          shuffle=False)
         if inference:
             self_test_loader = IBMBBatchLoader(graph,
+                                               batch_order,
                                                batch_params['num_batches'][2],
                                                test_indices,
                                                EDGE_INDEX_TYPE,
                                                batch_params['part_topk'][1],
                                                alpha=batch_params['alpha'],
-                                               batch_size=batch_size)
+                                               batch_size=batch_size,
+                                               shuffle=False)
     elif mode == 'rw_sampling':
         dir_name = f'./saint_cache'
         if not os.path.isdir(dir_name):
@@ -131,7 +154,8 @@ def get_loaders(graph: Data,
                                             rw_sampling_params['walk_length'],
                                             rw_sampling_params['sample_coverage'],
                                             save_dir=dir_name,
-                                            batch_size=rw_sampling_params['batch_size'][1], )
+                                            batch_size=rw_sampling_params['batch_size'][1],
+                                            shuffle=True)
         if inference:
             self_test_loader = SaintRWValSampler(graph,
                                                  test_indices,
@@ -140,7 +164,8 @@ def get_loaders(graph: Data,
                                                  rw_sampling_params['walk_length'],
                                                  rw_sampling_params['sample_coverage'],
                                                  save_dir=dir_name,
-                                                 batch_size=rw_sampling_params['batch_size'][1], )
+                                                 batch_size=rw_sampling_params['batch_size'][1],
+                                                 shuffle=True)
     elif mode == 'clustergcn':
         train_loader = ClusterGCNLoader(graph,
                                         batch_params['num_batches'][0],
@@ -153,14 +178,14 @@ def get_loaders(graph: Data,
                                            val_indices,
                                            EDGE_INDEX_TYPE,
                                            batch_size=batch_size,
-                                           shuffle=False)
+                                           shuffle=True)
         if inference:
             self_test_loader = ClusterGCNLoader(graph,
                                                 batch_params['num_batches'][2],
                                                 test_indices,
                                                 EDGE_INDEX_TYPE,
                                                 batch_size=batch_size,
-                                                shuffle=False)
+                                                shuffle=True)
     elif mode == 'ppr_shadow':
         train_loader = ShaDowLoader(graph,
                                     train_indices,
@@ -179,7 +204,7 @@ def get_loaders(graph: Data,
                                        shadow_ppr_params['eps'],
                                        batch_size=num_out_nodes_per_batch_normalization(
                                            len(val_indices), shadow_ppr_params['primes_per_batch'] * 2),
-                                       shuffle=False)
+                                       shuffle=True)
         if inference:
             self_test_loader = ShaDowLoader(graph,
                                             test_indices,
@@ -189,7 +214,7 @@ def get_loaders(graph: Data,
                                             shadow_ppr_params['eps'],
                                             batch_size=num_out_nodes_per_batch_normalization(
                                                 len(test_indices), shadow_ppr_params['primes_per_batch'] * 2),
-                                            shuffle=False)
+                                            shuffle=True)
     elif mode == 'rand':
         train_loader = IBMBRandLoader(graph,
                                       train_indices,
@@ -219,6 +244,7 @@ def get_loaders(graph: Data,
                                               shuffle=True)
     elif mode == 'randfix':
         train_loader = IBMBRandfixLoader(graph,
+                                         batch_order,
                                          train_indices,
                                          EDGE_INDEX_TYPE,
                                          num_out_nodes_per_batch_normalization(
@@ -227,8 +253,9 @@ def get_loaders(graph: Data,
                                          rand_ppr_params['alpha'],
                                          rand_ppr_params['eps'],
                                          batch_size=batch_size,
-                                         shuffle=True)
+                                         shuffle=False)
         self_val_loader = IBMBRandfixLoader(graph,
+                                            batch_order,
                                             val_indices,
                                             EDGE_INDEX_TYPE,
                                             num_out_nodes_per_batch_normalization(
@@ -240,6 +267,7 @@ def get_loaders(graph: Data,
                                             shuffle=False)
         if inference:
             self_test_loader = IBMBRandfixLoader(graph,
+                                                 batch_order,
                                                  test_indices,
                                                  EDGE_INDEX_TYPE,
                                                  num_out_nodes_per_batch_normalization(
@@ -294,6 +322,7 @@ def get_loaders(graph: Data,
     if ibmb_val:
         if mode != 'ppr' and ppr_params is not None:
             ppr_val_loader = IBMBNodeLoader(graph,
+                                            batch_order,
                                             val_indices,
                                             EDGE_INDEX_TYPE,
                                             ppr_params['neighbor_topk'],
@@ -302,9 +331,11 @@ def get_loaders(graph: Data,
                                             num_auxiliary_nodes_per_batch=None,
                                             alpha=ppr_params['alpha'],
                                             eps=ppr_params['eps'],
-                                            batch_size=batch_size, )
+                                            batch_size=batch_size,
+                                            shuffle=False)
             if inference:
                 ppr_test_loader = IBMBNodeLoader(graph,
+                                                 batch_order,
                                                  test_indices,
                                                  EDGE_INDEX_TYPE,
                                                  ppr_params['neighbor_topk'],
@@ -313,23 +344,28 @@ def get_loaders(graph: Data,
                                                  num_auxiliary_nodes_per_batch=None,
                                                  alpha=ppr_params['alpha'],
                                                  eps=ppr_params['eps'],
-                                                 batch_size=batch_size)
+                                                 batch_size=batch_size,
+                                                 shuffle=False)
         if mode != 'part' and batch_params is not None:
             batch_val_loader = IBMBBatchLoader(graph,
+                                               batch_order,
                                                batch_params['num_batches'][1],
                                                val_indices,
                                                EDGE_INDEX_TYPE,
                                                batch_params['part_topk'][1],
                                                alpha=batch_params['alpha'],
-                                               batch_size=batch_size)
+                                               batch_size=batch_size,
+                                               shuffle=False)
             if inference:
                 batch_test_loader = IBMBBatchLoader(graph,
+                                                    batch_order,
                                                     batch_params['num_batches'][2],
                                                     test_indices,
                                                     EDGE_INDEX_TYPE,
                                                     batch_params['part_topk'][1],
                                                     alpha=batch_params['alpha'],
-                                                    batch_size=batch_size)
+                                                    batch_size=batch_size,
+                                                    shuffle=False)
 
     return (train_loader,
             self_val_loader,

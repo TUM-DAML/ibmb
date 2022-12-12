@@ -4,6 +4,7 @@ from typing import List, Tuple, Optional
 
 import numpy as np
 import torch
+from torch.utils.data import Sampler
 from torch_geometric.data import Data
 from torch_geometric.utils import is_undirected
 from torch_sparse import SparseTensor
@@ -16,6 +17,7 @@ from .BaseLoader import BaseLoader
 class IBMBRandfixLoader(BaseLoader):
 
     def __init__(self, graph: Data,
+                 batch_order: str,
                  output_indices: torch.LongTensor,
                  return_edge_index_type: str,
                  num_output_nodes_per_batch: int,
@@ -23,6 +25,7 @@ class IBMBRandfixLoader(BaseLoader):
                  alpha: float = 0.2,
                  eps: float = 1.e-4,
                  batch_size: int = 1,
+                 sampler: Sampler = None,
                  **kwargs):
 
         self.out_aux_pairs = []
@@ -46,7 +49,13 @@ class IBMBRandfixLoader(BaseLoader):
         self.adj = None
         self.create_node_wise_loader(graph)
 
-        super().__init__(self.subgraphs if self.cache_data else self.out_aux_pairs, batch_size=batch_size, **kwargs)
+        if len(self.out_aux_pairs) > 2:   # <= 2 order makes no sense
+            ys = [graph.y[out].numpy() for out, _ in self.out_aux_pairs]
+            sampler = self.define_sampler(batch_order,
+                                          ys,
+                                          graph.y.max().item() + 1)
+
+        super().__init__(self.subgraphs if self.cache_data else self.out_aux_pairs, sampler=sampler, batch_size=batch_size, **kwargs)
 
     def create_node_wise_loader(self, graph: Data):
         logging.info("Start PPR calculation")

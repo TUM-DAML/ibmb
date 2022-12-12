@@ -3,6 +3,7 @@ from typing import Optional, List, Tuple
 
 import numpy as np
 import torch
+from torch.utils.data import Sampler
 from torch_geometric.data import Data
 from torch_sparse import SparseTensor
 from tqdm import tqdm
@@ -16,9 +17,11 @@ class IBMBReadyLoader(BaseLoader):
     """
 
     def __init__(self, graph: Data,
+                 batch_order: str,
                  return_edge_index_type: str,
                  batches: List[Tuple[np.ndarray, np.ndarray]],
                  adj: Optional[SparseTensor] = None,
+                 sampler: Sampler = None,
                  **kwargs):
 
         self.subgraphs = []
@@ -35,13 +38,19 @@ class IBMBReadyLoader(BaseLoader):
         assert return_edge_index_type in ['adj', 'edge_index']
         self.return_edge_index_type = return_edge_index_type
 
+        if len(self.batch_wise_out_aux_pairs) > 2:   # <= 2 order makes no sense
+            ys = [graph.y[out].numpy() for out, _ in self.out_aux_pairs]
+            sampler = self.define_sampler(batch_order,
+                                          ys,
+                                          graph.y.max().item() + 1)
+
         if self.cache_data:
             self.prepare_cache(graph, batches, adj)
         else:
             self.original_graph = graph  # need to cache the original graph
             self.adj = adj
 
-        super().__init__(self.subgraphs if self.cache_data else self.batch_wise_out_aux_pairs, **kwargs)
+        super().__init__(self.subgraphs if self.cache_data else self.batch_wise_out_aux_pairs, sampler=sampler, **kwargs)
 
     def prepare_cache(self, graph: Data,
                       batch_wise_out_aux_pairs: List[Tuple[np.ndarray, np.ndarray]],

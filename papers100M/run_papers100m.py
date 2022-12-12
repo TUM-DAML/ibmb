@@ -94,6 +94,7 @@ def run(mode,
                 (train_indices, val_indices, test_indices),
                 batch_size,
                 mode,
+                batch_order,
                 None,
                 None,
                 None,
@@ -146,51 +147,58 @@ def run(mode,
                 raise ValueError
 
             train_loader = IBMBReadyLoader(graph,
+                                           batch_order,
                                            'adj',
                                            train_batches,
                                            graph.adj_t,
                                            batch_size=batch_size,
-                                           shuffle=True)
+                                           shuffle=False)
             self_val_loader = IBMBReadyLoader(graph,
+                                              batch_order,
                                               'adj',
                                               val_batches,
                                               graph.adj_t,
                                               batch_size=batch_size,
-                                              shuffle=True)
+                                              shuffle=False)
             if inference:
                 self_test_loader = IBMBReadyLoader(graph,
+                                                   batch_order,
                                                    'adj',
                                                    test_batches,
                                                    graph.adj_t,
                                                    batch_size=batch_size,
-                                                   shuffle=True)
+                                                   shuffle=False)
             else:
                 self_test_loader = None
 
         batch_val_loader = IBMBReadyLoader(graph,
+                                           batch_order,
                                            'adj',
                                            batch_val_batches,
                                            graph.adj_t,
                                            batch_size=batch_size,
-                                           shuffle=True) if batch_val_batches is not None else None
+                                           shuffle=False) if batch_val_batches is not None else None
         batch_test_loader = IBMBReadyLoader(graph,
+                                            batch_order,
                                            'adj',
                                            batch_test_batches,
                                            graph.adj_t,
                                            batch_size=batch_size,
-                                           shuffle=True) if batch_test_batches is not None else None
+                                           shuffle=False) if batch_test_batches is not None else None
         ppr_val_loader = IBMBReadyLoader(graph,
+                                         batch_order,
                                            'adj',
                                            ppr_val_batches,
                                            graph.adj_t,
                                            batch_size=batch_size,
-                                           shuffle=True) if ppr_val_batches is not None else None
+                                           shuffle=False) if ppr_val_batches is not None else None
         ppr_test_loader = IBMBReadyLoader(graph,
+                                          batch_order,
                                            'adj',
                                            ppr_test_batches,
                                            graph.adj_t,
                                            batch_size=batch_size,
-                                           shuffle=True) if ppr_test_batches is not None else None
+                                           shuffle=False) if ppr_test_batches is not None else None
 
         stamp = ''.join(str(time.time()).split('.')) + str(seed)
         logging.info(f'model info: {comment}/model_{stamp}.pt')

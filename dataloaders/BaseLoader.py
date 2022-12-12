@@ -1,10 +1,16 @@
 from typing import List, Union, Tuple
+import logging
 
 import numpy as np
 import torch
+from torch.utils.data import RandomSampler
 from torch_geometric.data import Data
 from torch_geometric.utils import subgraph
 from torch_sparse import SparseTensor
+
+from dataloaders.MySampler import OrderedSampler, ConsecutiveSampler
+from data.data_utils import get_pair_wise_distance
+from data.modified_tsp import tsp_heuristic
 
 
 class BaseLoader(torch.utils.data.DataLoader):
@@ -107,3 +113,26 @@ class BaseLoader(torch.utils.data.DataLoader):
             subg[k] = v
 
         return subg
+
+    @classmethod
+    def define_sampler(cls,
+                       batch_order: str,
+                       ys: List[Union[torch.Tensor, np.ndarray, List]],
+                       num_classes: int,
+                       dist_type: str = 'kl'):
+        if batch_order == 'rand':
+            logging.info("Running with random order")
+            sampler = RandomSampler(ys)
+        elif batch_order in ['order', 'sample']:
+            kl_div = get_pair_wise_distance(ys, num_classes, dist_type=dist_type)
+            if batch_order == 'order':
+                best_perm, _ = tsp_heuristic(kl_div)
+                logging.info(f"Running with given order: {best_perm}")
+                sampler = OrderedSampler(best_perm)
+            else:
+                logging.info("Running with weighted sampling")
+                sampler = ConsecutiveSampler(kl_div)
+        else:
+            raise ValueError
+
+        return sampler
