@@ -65,6 +65,7 @@ class ShaDowLoader(BaseLoader):
     def __len__(self):
         return len(self.out_aux_pairs)
 
+    @property
     def loader_len(self):
         return ceil(len(self.out_aux_pairs) / self.batch_size)
 

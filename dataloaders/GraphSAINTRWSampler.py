@@ -196,6 +196,7 @@ class SaintRWValSampler(BaseLoader):
     def __len__(self):
         return len(self.output_indices)
 
+    @property
     def loader_len(self):
         return ceil(len(self.output_indices) / self.batch_size)
 

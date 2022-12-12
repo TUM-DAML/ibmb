@@ -1,12 +1,6 @@
 import queue
 import threading
 
-from dataloaders.GraphSAINTRWSampler import SaintRWValSampler
-from dataloaders.IBMBRandLoader import IBMBRandLoader
-from dataloaders.ShaDowLoader import ShaDowLoader
-from dataloaders.LADIESSampler import LADIESSampler
-from dataloaders.NeighborSamplingLoader import NeighborSamplingLoader
-
 
 class BaseGenerator(threading.Thread):
     def __init__(self, max_prefetch=1, device='cuda'):
@@ -37,13 +31,6 @@ class BackgroundGenerator(BaseGenerator):
 
     def run(self):
         for i, graph in enumerate(self.dataloader):
-            if isinstance(self.dataloader, (SaintRWValSampler,
-                                            ShaDowLoader,
-                                            IBMBRandLoader,
-                                            LADIESSampler,
-                                            NeighborSamplingLoader)):
-                stop_signal = i == self.dataloader.loader_len() - 1
-            else:
-                stop_signal = i == len(self.dataloader) - 1
+            stop_signal = i == self.dataloader.loader_len - 1
             self.queue.put((graph.to(self.device, non_blocking=True), stop_signal))
         self.queue.put(None)

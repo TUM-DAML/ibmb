@@ -44,8 +44,7 @@ class Trainer:
 
     def get_loss_scaling(self, len_loader: int):
         micro_batch = int(min(self.micro_batch, len_loader))
-        num_batches = ceil(len_loader / self.batch_size)
-        loss_scaling_lst = [micro_batch] * (num_batches // micro_batch) + [num_batches % micro_batch]
+        loss_scaling_lst = [micro_batch] * (len_loader // micro_batch) + [len_loader % micro_batch]
         return loss_scaling_lst, micro_batch
 
     def train(self,
@@ -90,7 +89,7 @@ class Trainer:
 
             # train
             model.train()
-            loss_scaling_lst, cur_micro_batch = self.get_loss_scaling(len(train_loader))
+            loss_scaling_lst, cur_micro_batch = self.get_loss_scaling(train_loader.loader_len)
             loader, next_loader = next_loader, None
 
             start_time = time.time()
@@ -385,7 +384,7 @@ class Trainer:
         adj = BaseLoader.normalize_adjmat(adj, normalization='sym')
 
         outputs = model.chunked_pass(MyGraph(x=graph.x, adj=adj, idx=torch.from_numpy(mask)),
-                                     self.num_batches // self.batch_size).detach().numpy()
+                                     self.num_batches // self.batch_size).detach().numpy()  # an estimate of #chunks
 
         for cat in ['val', 'test']:
             nodes = val_nodes if cat == 'val' else test_nodes

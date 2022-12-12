@@ -35,6 +35,7 @@ class NeighborSamplingLoader(torch.utils.data.DataLoader):
     def __len__(self):
         return len(self.node_idx)
 
+    @property
     def loader_len(self):
         return ceil(len(self.node_idx) / self.batch_size)
 
