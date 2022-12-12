@@ -362,6 +362,7 @@ class Trainer:
                     torch.cuda.synchronize()
                     time_dict[sample].append(time.time() - start_time)
 
+    @torch.no_grad()
     def full_graph_inference(self,
                              model,
                              graph,
