@@ -117,18 +117,15 @@ def run(dataset_name,
                           heads,
                           device)
 
-        if len(train_loader) > 1:
-            trainer.train(train_loader,
-                          self_val_loader,
-                          ppr_val_loader,
-                          batch_val_loader,
-                          model=model,
-                          lr=lr,
-                          reg=reg,
-                          comment=comment,
-                          run_no=stamp)
-        else:
-            raise NotImplemented
+        trainer.train(train_loader,
+                      self_val_loader,
+                      ppr_val_loader,
+                      batch_val_loader,
+                      model=model,
+                      lr=lr,
+                      reg=reg,
+                      comment=comment,
+                      run_no=stamp)
 
         gpu_memory = torch.cuda.max_memory_allocated()
         if inference:
