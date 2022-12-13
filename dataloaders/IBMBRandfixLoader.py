@@ -129,6 +129,10 @@ class IBMBRandfixLoader(BaseLoader):
         return self.subgraphs[idx] if self.cache_data else self.out_aux_pairs[idx]
 
     def __len__(self):
+        return len(self.out_aux_pairs)
+
+    @property
+    def loader_len(self):
         return ceil(len(self.out_aux_pairs) / self.batch_size)
 
     def __collate__(self, data_list):

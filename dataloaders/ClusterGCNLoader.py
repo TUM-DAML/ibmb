@@ -102,6 +102,10 @@ class ClusterGCNLoader(BaseLoader):
 
     def __len__(self):
         assert self.num_partitions == len(self.batch_wise_out_aux_pairs)
+        return self.num_partitions
+
+    @property
+    def loader_len(self):
         return ceil(self.num_partitions / self._batchsize)
 
     def __collate__(self, data_list):

@@ -339,6 +339,10 @@ class IBMBNodeLoader(BaseLoader):
         return self.subgraphs[idx] if self.cache_data else self.node_wise_out_aux_pairs[idx]
 
     def __len__(self):
+        return len(self.node_wise_out_aux_pairs)
+
+    @property
+    def loader_len(self):
         return ceil(len(self.node_wise_out_aux_pairs) / self._batchsize)
 
     def __collate__(self, data_list):

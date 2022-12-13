@@ -32,7 +32,7 @@ class BaseLoader(torch.utils.data.DataLoader):
 
     @property
     def loader_len(self):
-        return len(self)
+        raise NotImplementedError
 
     def __collate__(self, *args, **kwargs):
         raise NotImplementedError
